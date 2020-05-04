@@ -24,6 +24,8 @@ struct Game {
 
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
+	std::vector<int> hand;
+	std::vector<int> table;
 	
 	float cardWidth{ 0.25f * 512.0f }, cardHeight{ 0.5f * 512.0f };
 	bool cardVertexDataUpdated{ false };
@@ -42,6 +44,7 @@ int cardVertexIndex(int cardId);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 void setCardsZPositionAtStackPosition(Game* game);
 Stack* getCardStack(Game* game, int cardIndex);
+bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex);
 
 void init_game(Game *game) {
 
@@ -58,7 +61,7 @@ void init_game(Game *game) {
 	game->stacks.push_back(stack5);
 
 	int cards = 5;
-
+	//init table cards
 	for (int i = 0; i < cards; i++) {
 		game->stacks[i].cardIndexes.push_back(i);
 		game->cardVertexData.push_back((GLfloat)game->stacks[i].x); //x coord
@@ -69,11 +72,41 @@ void init_game(Game *game) {
 		game->textureOffsetData.push_back((GLfloat)0.0f);
 
 		game->cardGrabbedData.push_back((GLboolean)false);
-		Card card{ i, Suit::BONE };
+		Suit cardSuit;
+		if (i % 2 == 0) {
+			cardSuit = Suit::EYE;
+		}
+		else {
+			cardSuit = Suit::BONE;
+		}
+		Card card{ i, cardSuit};
 		game->cards.push_back(card);
 
 		game->numbersTextureOffsetData.push_back((GLfloat)(card.number) * 0.1f);
 		game->numbersTextureOffsetData.push_back((GLfloat)0.0f);
+
+		game->table.push_back(i);
+	}
+	
+	int handSize = 3;
+	//init hand cards
+	for (int i = 0; i < handSize; i++) {
+		Card card;
+		card.number = i;
+		Suit cardSuit;
+		if (i % 2 == 0) {
+			cardSuit = Suit::BONE;
+		}
+		else {
+			cardSuit = Suit::EYE;
+		}
+		card.suit = cardSuit;
+		game->cards.push_back(card);
+		game->hand.push_back(game->cards.size() - 1);
+		
+		game->cardVertexData.push_back((GLfloat) i * 300.0f); // x
+		game->cardVertexData.push_back((GLfloat) 100.0f);     // y
+		game->cardVertexData.push_back((GLfloat) 0.0f);       // z
 	}
 
 	setCardsZPositionAtStackPosition(game);
@@ -95,7 +128,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		GLfloat grabbedX{ game->cardVertexData[cardVertexIndex(game->grabbedCard)] };
 		GLfloat grabbedY{ game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1]};
 		for (Stack& stack : game->stacks) {
-			if (boxCollision(grabbedX, grabbedY, game->cardWidth, game->cardHeight, stack.x, stack.y, game->cardWidth, game->cardHeight)) {
+			if (boxCollision(grabbedX, grabbedY, game->cardWidth, game->cardHeight, stack.x, stack.y, game->cardWidth, game->cardHeight) && cardFitsOnStack(game, stack, game->grabbedCard)) {
 				game->cardVertexData[cardVertexIndex(game->grabbedCard)] = stack.x;
 				game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] = stack.y;
 
@@ -103,6 +136,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 				auto it = std::find(orignal_stack->cardIndexes.begin(), orignal_stack->cardIndexes.end(), game->grabbedCard);
 				orignal_stack->cardIndexes.erase(it);
 				stack.cardIndexes.push_back(game->grabbedCard);
+				
 			}
 			else {
 				Stack* orignal_stack = getCardStack(game, game->grabbedCard);
@@ -136,12 +170,13 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 int pickCardFromStack(Game* game, float x, float y) {
 	std::vector<int> collidedCardIndexes;
-	for (int i = 0; i < game->cardVertexData.size(); i += 3) {
-		GLfloat posx = game->cardVertexData[i];
-		GLfloat posy = game->cardVertexData[i + 1];
-	
+
+	for (int i = 0; i < game->table.size(); i ++) {
+		GLfloat posx = game->cardVertexData[cardVertexIndex(i)];
+		GLfloat posy = game->cardVertexData[cardVertexIndex(i) + 1];
+
 		if (x > posx && x < posx + game->cardWidth && y > posy && y < posy + game->cardHeight) {
-			collidedCardIndexes.push_back(i / 3);
+			collidedCardIndexes.push_back(i);
 		}
 	}
 
@@ -150,7 +185,6 @@ int pickCardFromStack(Game* game, float x, float y) {
 	}
 	else {
 		Stack* stack = getCardStack(game, collidedCardIndexes[0]);
-		//return the top card in the stack
 		return stack->cardIndexes.back();
 	}
 }
@@ -168,7 +202,6 @@ bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, fl
 
 	return (abs(x1Center - x2Center) < ((w1 + w2) / 2) && abs(y1Center - y2Center) < ((h1 + h2) / 2));
 }
-
 
 void setCardsZPositionAtStackPosition(Game* game) {
 	GLfloat zIncrement = 0.1f;
@@ -188,4 +221,19 @@ Stack* getCardStack(Game* game, int cardIndex) {
 	}
 
 	return nullptr;
+}
+
+bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex) {
+
+	if (stack.cardIndexes.size() == 0) {
+		return true;
+	}
+
+	int topCardIndex = stack.cardIndexes.back();
+	if (game->cards[topCardIndex].suit == game->cards[cardIndex].suit) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
