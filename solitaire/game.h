@@ -1,8 +1,15 @@
 #pragma once
 
+/*
+	PROBLEMS
+	- pickCard uses card Z order instead of stack order
+*/
+
 #include <vector>
 #include <GL/GLU.h>
 #include <algorithm>
+
+
 
 enum Suit {BONE, EYE, BLOOD, SKIN, HAIR};
 
@@ -41,7 +48,6 @@ void tick(Game *game, float mouseX, float mouseY, float dt);
 int pickCard(Game* game, float x, float y);
 int cardVertexIndex(int cardId);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
-void setCardsZPositionAtStackPosition(Game* game);
 void setCardsZPositionAtStackPosition(Game* game);
 Stack* getCardStack(Game* game, int cardIndex);
 
@@ -100,7 +106,16 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 			if (boxCollision(grabbedX, grabbedY, game->cardWidth, game->cardHeight, stack.x, stack.y, game->cardWidth, game->cardHeight)) {
 				game->cardVertexData[cardVertexIndex(game->grabbedCard)] = stack.x;
 				game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] = stack.y;
+
+				Stack* orignal_stack = getCardStack(game, game->grabbedCard);
+				auto it = std::find(orignal_stack->cardIndexes.begin(), orignal_stack->cardIndexes.end(), game->grabbedCard);
+				orignal_stack->cardIndexes.erase(it);
 				stack.cardIndexes.push_back(game->grabbedCard);
+			}
+			else {
+				Stack* orignal_stack = getCardStack(game, game->grabbedCard);
+				game->cardVertexData[cardVertexIndex(game->grabbedCard)] = orignal_stack->x;
+				game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] = orignal_stack->y;
 			}
 		}
 
@@ -123,37 +138,33 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		if (pickedCard > -1 && game->lmbDown) {
 			game->grabbedCard = pickedCard;
 			game->cardGrabbedData[pickedCard] = (GLboolean)true;
-
-			Stack *stack = getCardStack(game, pickedCard);
-			if (stack != nullptr) {
-				auto it = std::find(stack->cardIndexes.begin(), stack->cardIndexes.end(), pickedCard);
-				stack->cardIndexes.erase(it);
-			}
 		}
 	}
 }
 
+//TODO: this function uses card Z order to find the top card of a stack, when it should use stack order.
+//Z-order is just a side effect of stack order
 int pickCard(Game *game, float x, float y) {
-	std::vector<int> cardIndexes;
+	std::vector<int> collidedCardIndexes;
 	for (int i = 0; i < game->cardVertexData.size(); i += 3) {
 		GLfloat posx = game->cardVertexData[i];
 		GLfloat posy = game->cardVertexData[i + 1];
 
 		if (x > posx && x < posx + game->cardWidth && y > posy && y < posy + game->cardHeight) {
-			cardIndexes.push_back(i / 3);
+			collidedCardIndexes.push_back(i / 3);
 		}
 	}
 
-	if (cardIndexes.size() == 0) {
+	if (collidedCardIndexes.size() == 0) {
 		return -1;
 	}
 	else {
-		std::sort(cardIndexes.begin(), cardIndexes.end(),
+		std::sort(collidedCardIndexes.begin(), collidedCardIndexes.end(),
 			[game](int i1, int i2) {
-				return game->cardVertexData[i1 * 3 + 2] > game->cardVertexData[i2 * 3 + 2];
+				return game->cardVertexData[cardVertexIndex(i1) + 2] > game->cardVertexData[cardVertexIndex(i2) + 2];
 			}
 		);
-		return cardIndexes[0];
+		return collidedCardIndexes[0];
 	}
 }
 
@@ -177,7 +188,7 @@ void setCardsZPositionAtStackPosition(Game* game) {
 	for (Stack stack : game->stacks) {
 		for (int i = 0; i < stack.cardIndexes.size(); i++) {
 			int cardIndex = stack.cardIndexes[i];
-			game->cardVertexData[cardIndex * 3 + 2] = (GLfloat)i * (GLfloat)zIncrement;
+			game->cardVertexData[cardVertexIndex(cardIndex) + 2] = (GLfloat)i * (GLfloat)zIncrement;
 		}
 	}
 }
