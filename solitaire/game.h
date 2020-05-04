@@ -1,15 +1,7 @@
 #pragma once
 
-/*
-	PROBLEMS
-	- pickCard uses card Z order instead of stack order
-*/
-
 #include <vector>
 #include <GL/GLU.h>
-#include <algorithm>
-
-
 
 enum Suit {BONE, EYE, BLOOD, SKIN, HAIR};
 
@@ -45,7 +37,7 @@ struct Game {
 
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
-int pickCard(Game* game, float x, float y);
+int pickCardFromStack(Game* game, float x, float y);
 int cardVertexIndex(int cardId);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 void setCardsZPositionAtStackPosition(Game* game);
@@ -134,7 +126,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		game->cardVertexDataUpdated = true;
 	}
 	else {
-		int pickedCard = pickCard(game, game->mouseX, game->mouseY);
+		int pickedCard = pickCardFromStack(game, game->mouseX, game->mouseY);
 		if (pickedCard > -1 && game->lmbDown) {
 			game->grabbedCard = pickedCard;
 			game->cardGrabbedData[pickedCard] = (GLboolean)true;
@@ -142,14 +134,12 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	}
 }
 
-//TODO: this function uses card Z order to find the top card of a stack, when it should use stack order.
-//Z-order is just a side effect of stack order
-int pickCard(Game *game, float x, float y) {
+int pickCardFromStack(Game* game, float x, float y) {
 	std::vector<int> collidedCardIndexes;
 	for (int i = 0; i < game->cardVertexData.size(); i += 3) {
 		GLfloat posx = game->cardVertexData[i];
 		GLfloat posy = game->cardVertexData[i + 1];
-
+	
 		if (x > posx && x < posx + game->cardWidth && y > posy && y < posy + game->cardHeight) {
 			collidedCardIndexes.push_back(i / 3);
 		}
@@ -159,12 +149,9 @@ int pickCard(Game *game, float x, float y) {
 		return -1;
 	}
 	else {
-		std::sort(collidedCardIndexes.begin(), collidedCardIndexes.end(),
-			[game](int i1, int i2) {
-				return game->cardVertexData[cardVertexIndex(i1) + 2] > game->cardVertexData[cardVertexIndex(i2) + 2];
-			}
-		);
-		return collidedCardIndexes[0];
+		Stack* stack = getCardStack(game, collidedCardIndexes[0]);
+		//return the top card in the stack
+		return stack->cardIndexes.back();
 	}
 }
 
