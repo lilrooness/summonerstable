@@ -14,6 +14,11 @@ struct FloatAnimation {
 	bool done{false};
 };
 
+struct EntityFloatAnimation {
+	int entityId;
+	FloatAnimation floatAnimation;
+};
+
 FloatAnimation createAnimation(float from, float to, float durationTicks, float currentTime) {
 	FloatAnimation  animation;
 	animation.from = from;
