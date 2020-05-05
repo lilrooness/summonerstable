@@ -22,6 +22,9 @@ struct Game {
 	std::vector<GLfloat> textureOffsetData;
 	std::vector<GLboolean> cardGrabbedData;
 
+	std::vector<GLfloat> candelsVertexData;
+	std::vector<GLfloat> candelTextureOffsetData;
+
 	std::vector<GLfloat> numbersTextureOffsetData;
 
 	std::vector<Card> cards;
@@ -67,6 +70,17 @@ void init_game(Game *game) {
 	game->stacks.push_back(stack4);
 	game->stacks.push_back(stack5);
 
+	int candels = 1;
+
+	for (int i = 0; i < candels; i++) {
+		game->candelsVertexData.push_back((GLfloat)i * 100.0f + 100.0f);
+		game->candelsVertexData.push_back((GLfloat)500);
+		game->candelsVertexData.push_back((GLfloat)0.0f);
+
+		game->candelTextureOffsetData.push_back((GLfloat)0.0f);
+		game->candelTextureOffsetData.push_back((GLfloat)0.0f);
+	}
+
 	int cards = 5;
 	//init table cards
 	for (int i = 0; i < cards; i++) {
@@ -84,7 +98,7 @@ void init_game(Game *game) {
 	for (int i = 0; i < handCards; i++) {
 		Suit cardSuit = static_cast<Suit>(rand() % 5);
 		Card card{ i, cardSuit};
-		int cardIndex = addCard(game, card, 300.0f * i + 300, 300.0f, 0.0f);
+		int cardIndex = addCard(game, card, 150.0f * i + 100, 70.0f, 0.0f);
 		game->hand.push_back(cardIndex);
 	}
 

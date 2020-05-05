@@ -34,13 +34,17 @@ GLint gProjectionLocation = -1;
 
 unsigned int cardTexture;
 unsigned int cardNumberTexture;
+unsigned int candelTexture;
 
 GLfloat *transformationData;
 GLfloat *textureTransformationData;
 GLfloat *numbersTextureTransformationData;
+GLfloat* candelsTextureTransformationData;
+GLfloat* candelsTransformationData;
 
 InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D numbersMeshMaterial;
+InstancedSpriteMeshMaterial2D candelsMeshMaterial;
 
 glm::mat4 proj;
 glm::mat4 model;
@@ -56,6 +60,14 @@ bool initGL() {
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -50.0f));
 	model = glm::scale(model, glm::vec3(256.0f, 256.0f, 1.0f));
 	bool success = true;
+
+	glGenTextures(1, &candelTexture);
+	glBindTexture(GL_TEXTURE_2D, candelTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glGenTextures(1, &cardNumberTexture);
 	glBindTexture(GL_TEXTURE_2D, cardNumberTexture);
@@ -80,7 +92,7 @@ bool initGL() {
 	if (cardTextureData) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cardTextureData);
 	} else {
-		std::cout << "Failed to load texture" << std::endl;
+		std::cout << "Failed to load card texture" << std::endl;
 	}
 
 	stbi_image_free(cardTextureData);
@@ -92,10 +104,20 @@ bool initGL() {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, numberTextureData);
 	}
 	else {
-		std::cout << "Failed to load texture" << std::endl;
+		std::cout << "Failed to load number texture" << std::endl;
 	}
 
 	stbi_image_free(numberTextureData);
+
+	unsigned char* candelTextureData = stbi_load("textures/candels.png", &width, &height, &nColourChannels, 0);
+
+	glBindTexture(GL_TEXTURE_2D, candelTexture);
+	if (candelTextureData) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, candelTextureData);
+	}
+	else {
+		std::cout << "Failed to load candel texture" << endl;
+	}
 
 	gProgramID = create_shader_program("shader.vs", "shader.fs");
 
@@ -146,6 +168,19 @@ bool initGL() {
 			0.0f, 0.0f
 		};
 
+		GLfloat candelVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			//Texture Coordinates
+			0.0f, 0.0625f,
+			0.0625f, 0.0625f,
+			0.0625f, 0.0f,
+			0.0f, 0.0f
+		};
+
 		initInstancedSpriteMeshMaterial_2D(
 			gVertexPos2DLocation,
 			gTextureTranslationLocation,
@@ -167,6 +202,17 @@ bool initGL() {
 			transformationData, game.cardVertexData.size(),
 			std::vector<InstancedSpriteShaderAttribute_Float>(),
 			&numbersMeshMaterial);
+
+		initInstancedSpriteMeshMaterial_2D(
+			gVertexPos2DLocation,
+			gTextureTranslationLocation,
+			gTextureUVLocation,
+			gVertexTranslationLocation,
+			candelVertexData, 20,
+			candelsTextureTransformationData, game.candelTextureOffsetData.size(),
+			candelsTransformationData, game.candelsVertexData.size(),
+			std::vector<InstancedSpriteShaderAttribute_Float>(),
+			&candelsMeshMaterial);
 	}
 	return success;
 }
@@ -192,6 +238,10 @@ void render_fun() {
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.numbersTextureOffsetData.size() / 2);
 	glDisable(GL_BLEND);
 
+	glBindTexture(GL_TEXTURE_2D, candelTexture);
+	glBindVertexArray(candelsMeshMaterial.vao);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.candelTextureOffsetData.size() / 2);
+
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(0);
 	glUseProgram(NULL);
@@ -204,6 +254,9 @@ int main( int argc, char* args[] )
 	transformationData = game.cardVertexData.data();
 	textureTransformationData = game.textureOffsetData.data();
 	numbersTextureTransformationData = game.numbersTextureOffsetData.data();
+	candelsTextureTransformationData = game.candelTextureOffsetData.data();
+	candelsTransformationData = game.candelsVertexData.data();
+
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 	
