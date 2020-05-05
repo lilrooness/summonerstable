@@ -2,7 +2,8 @@
 
 #include <vector>
 #include <GL/GLU.h>
-
+#include <time.h>
+#include <stdlib.h>
 
 enum Suit { EYE, BONE, BLOOD, SKIN, HAIR};
 
@@ -52,7 +53,7 @@ int addCard(Game* game, Card card, GLfloat x, GLfloat y, GLfloat z);
 int pickCardFromHand(Game* game, float x, float y);
 
 void init_game(Game *game) {
-
+	srand(time(NULL));
 	//table stacks
 	Stack stack1{ 800.0f, 900 };
 	Stack stack2{ 400.0f, 600.0f };
@@ -69,17 +70,12 @@ void init_game(Game *game) {
 	int cards = 5;
 	//init table cards
 	for (int i = 0; i < cards; i++) {
-		Suit cardSuit;
-		if (i % 2 == 0) {
-			cardSuit = Suit::EYE;
-		}
-		else {
-			cardSuit = Suit::BONE;
-		}
+
+		Suit cardSuit = static_cast<Suit>( rand() % 5);
+		int number = (rand() % 10) + 1;
 		Card card{ i, cardSuit };
 		int cardIndex = addCard(game, card, game->stacks[i].x, game->stacks[i].y, 0.0f);
 		game->stacks[i].cardIndexes.push_back(cardIndex);
-
 		game->table.push_back(cardIndex);
 	}
 
