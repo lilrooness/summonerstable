@@ -5,7 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-enum Suit { EYE, BONE, BLOOD, SKIN, HAIR};
+enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
 
 struct Card {
 	int number;
@@ -82,7 +82,8 @@ void init_game(Game *game) {
 	int handCards = 3;
 	
 	for (int i = 0; i < handCards; i++) {
-		Card card{ i, Suit::BONE };
+		Suit cardSuit = static_cast<Suit>(rand() % 5);
+		Card card{ i, cardSuit};
 		int cardIndex = addCard(game, card, 300.0f * i + 300, 300.0f, 0.0f);
 		game->hand.push_back(cardIndex);
 	}

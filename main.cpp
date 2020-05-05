@@ -276,32 +276,6 @@ int main( int argc, char* args[] )
 				if (e.key.keysym.sym == SDLK_ESCAPE) {
 					quit = true;
 				}
-				if (e.key.keysym.sym == SDLK_w) {
-					game.up = true;
-				}
-				if (e.key.keysym.sym == SDLK_a) {
-					game.left = true;
-				}
-				if (e.key.keysym.sym == SDLK_s) {
-					game.down = true;
-				}
-				if (e.key.keysym.sym == SDLK_d) {
-					game.right = true;
-				}
-			}
-			else if (e.type == SDL_KEYUP) {
-				if (e.key.keysym.sym == SDLK_w) {
-					game.up = false;
-				}
-				if (e.key.keysym.sym == SDLK_a) {
-					game.left = false;
-				}
-				if (e.key.keysym.sym == SDLK_s) {
-					game.down = false;
-				}
-				if (e.key.keysym.sym == SDLK_d) {
-					game.right = false;
-				}
 			}
 			else if (e.type == SDL_MOUSEMOTION) {
 
@@ -320,22 +294,6 @@ int main( int argc, char* args[] )
 				game.lmbDown = false;
 			}
 
-		}
-
-		float xspeed = 0.0;
-		float yspeed = 0.0;
-
-		if (game.right) {
-			xspeed += game.speed;
-		}
-		if (game.left) {
-			xspeed -= game.speed;
-		}
-		if (game.up) {
-			yspeed += game.speed;
-		}
-		if (game.down) {
-			yspeed -= game.speed;
 		}
 
 		Uint32 currentTicks = SDL_GetTicks();
