@@ -37,10 +37,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.fs">
+    <None Include="shaders\shader.fs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shader.vs">
+    <None Include="shaders\shader.vs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\candel_shader.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\candel_shader.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

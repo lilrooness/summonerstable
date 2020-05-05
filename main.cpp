@@ -22,6 +22,7 @@ int SCREEN_HEIGHT;
 
 //Graphics program
 GLuint gProgramID = 0;
+GLuint gCandelProgramID = 0;
 
 GLint gVertexPos2DLocation = -1;
 GLint gTextureUVLocation = -1;
@@ -119,7 +120,8 @@ bool initGL() {
 		std::cout << "Failed to load candel texture" << endl;
 	}
 
-	gProgramID = create_shader_program("shader.vs", "shader.fs");
+	gProgramID = create_shader_program("shaders/shader.vs", "shaders/shader.fs");
+	gCandelProgramID = create_shader_program("shaders/candel_shader.vs", "shaders/candel_shader.fs");
 
 	gModelLocation = glGetUniformLocation(gProgramID, "model");
 	gViewLocation = glGetUniformLocation(gProgramID, "view");
@@ -238,6 +240,11 @@ void render_fun() {
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.numbersTextureOffsetData.size() / 2);
 	glDisable(GL_BLEND);
 
+	glUseProgram(gCandelProgramID);
+	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
+
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.candelTextureOffsetData.size() / 2);
@@ -274,7 +281,7 @@ int main( int argc, char* args[] )
 	{
 		//Use OpenGL 3.1 core
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 		//Create window
