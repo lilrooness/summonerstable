@@ -61,7 +61,7 @@ GLenum initInstancedSpriteMeshMaterial_2D(
 	glVertexAttribPointer(gTextureUVLocation, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)(sizeof(float) * 12));
 	glEnableVertexAttribArray(gTextureUVLocation);
 
-	for (InstancedSpriteShaderAttribute_Float attrib : shaderAttributes) {
+	for (InstancedSpriteShaderAttribute_Float& attrib : shaderAttributes) {
 		glGenBuffers(1, &attrib.bufferHandle);
 		glBindBuffer(GL_ARRAY_BUFFER, attrib.bufferHandle);
 		glBufferData(GL_ARRAY_BUFFER, attrib.instancedDataSize * sizeof(GLfloat), attrib.instancedData, GL_STATIC_DRAW);
@@ -71,6 +71,8 @@ GLenum initInstancedSpriteMeshMaterial_2D(
 		glVertexAttribDivisor(attrib.location, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
+
+	out_meshMaterial->shaderAttributes = shaderAttributes;
 
 	GLuint quadIndexData[] = { 0, 1, 2, 0, 2, 3 };
 

@@ -37,11 +37,11 @@ unsigned int cardTexture;
 unsigned int cardNumberTexture;
 unsigned int candelTexture;
 
-GLfloat *transformationData;
-GLfloat *textureTransformationData;
-GLfloat *numbersTextureTransformationData;
-GLfloat* candelsTextureTransformationData;
-GLfloat* candelsTransformationData;
+//GLfloat *transformationData;
+//GLfloat *textureTransformationData;
+//GLfloat *numbersTextureTransformationData;
+//GLfloat* candelsTextureTransformationData;
+//GLfloat* candelsTransformationData;
 
 InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D numbersMeshMaterial;
@@ -51,9 +51,9 @@ glm::mat4 proj;
 glm::mat4 model;
 glm::mat4 view;
 
-Game game;
+//Game game;
 
-bool initGL() {
+bool initGL(Game *game) {
 
 	proj = glm::ortho(0.0f, 1600.0f, 0.0f, 1200.0f, 1.0f, 100.0f);
 	model = glm::mat4(1.0);
@@ -189,8 +189,8 @@ bool initGL() {
 			gTextureUVLocation,
 			gVertexTranslationLocation,
 			cardVertexData, 20,
-			textureTransformationData, game.textureOffsetData.size(),
-			transformationData, game.cardVertexData.size(),
+			game->Buffer_cardsTextureOffsetData.data(), game->Buffer_cardsTextureOffsetData.size(),
+			game->Buffer_cardsVertexOffsetData.data(), game->Buffer_cardsVertexOffsetData.size(),
 			std::vector<InstancedSpriteShaderAttribute_Float>(),
 			&cardMeshMaterial);
 
@@ -200,8 +200,8 @@ bool initGL() {
 			gTextureUVLocation,
 			gVertexTranslationLocation,
 			numberVertexData, 20,
-			numbersTextureTransformationData, game.numbersTextureOffsetData.size(),
-			transformationData, game.cardVertexData.size(),
+			game->Buffer_numbersTextureOffsetData.data(), game->Buffer_numbersTextureOffsetData.size(),
+			game->Buffer_cardsVertexOffsetData.data() , game->Buffer_cardsVertexOffsetData.size(),
 			std::vector<InstancedSpriteShaderAttribute_Float>(),
 			&numbersMeshMaterial);
 
@@ -210,8 +210,8 @@ bool initGL() {
 		candleOnShaderAttrib.name = "candleOn";
 		candleOnShaderAttrib.dim = 1;
 		candleOnShaderAttrib.location = glGetAttribLocation(gCandelProgramID, candleOnShaderAttrib.name);
-		candleOnShaderAttrib.instancedDataSize = game.candles.size();
-		candleOnShaderAttrib.instancedData = game.candles.data();
+		candleOnShaderAttrib.instancedDataSize = game->Buffer_candlesStateData.size();
+		candleOnShaderAttrib.instancedData = game->Buffer_candlesStateData.data();
 
 		initInstancedSpriteMeshMaterial_2D(
 			gVertexPos2DLocation,
@@ -219,15 +219,15 @@ bool initGL() {
 			gTextureUVLocation,
 			gVertexTranslationLocation,
 			candelVertexData, 20,
-			candelsTextureTransformationData, game.candelTextureOffsetData.size(),
-			candelsTransformationData, game.candelsVertexData.size(),
+			game->Buffer_candlesTextureOffsetData.data(), game->Buffer_candlesTextureOffsetData.size(),
+			game->Buffer_candlesVertexOffsetData.data(), game->Buffer_candlesVertexOffsetData.size(),
 			std::vector<InstancedSpriteShaderAttribute_Float> { candleOnShaderAttrib },
 			&candelsMeshMaterial);
 	}
 	return success;
 }
 
-void render_fun() {
+void render_fun(Game *game) {
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -239,13 +239,13 @@ void render_fun() {
 
 	glBindTexture(GL_TEXTURE_2D, cardTexture);
 	glBindVertexArray(cardMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.cardVertexData.size()/3);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_cardsVertexOffsetData.size() /3);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, cardNumberTexture);
 	glBindVertexArray(numbersMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.numbersTextureOffsetData.size() / 2);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_numbersTextureOffsetData.size() / 2);
 	glDisable(GL_BLEND);
 
 	glUseProgram(gCandelProgramID);
@@ -255,7 +255,7 @@ void render_fun() {
 
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game.candelTextureOffsetData.size() / 2);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
 
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(0);
@@ -265,12 +265,8 @@ void render_fun() {
 
 int main( int argc, char* args[] )
 {
+	Game game;
 	init_game(&game);
-	transformationData = game.cardVertexData.data();
-	textureTransformationData = game.textureOffsetData.data();
-	numbersTextureTransformationData = game.numbersTextureOffsetData.data();
-	candelsTextureTransformationData = game.candelTextureOffsetData.data();
-	candelsTransformationData = game.candelsVertexData.data();
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -318,7 +314,7 @@ int main( int argc, char* args[] )
 				}
 
 				//Initialise OpenGL
-				if (!initGL()) {
+				if (!initGL(&game)) {
 					printf("unable to initialise opengl");
 					return 1;
 				}
@@ -344,6 +340,9 @@ int main( int argc, char* args[] )
 				if (e.key.keysym.sym == SDLK_ESCAPE) {
 					quit = true;
 				}
+				//else if (e.key.keysym.sym == SDLK_SPACE) {
+				//	end_turn(&game);
+				//}
 			}
 			else if (e.type == SDL_MOUSEMOTION) {
 
@@ -372,31 +371,41 @@ int main( int argc, char* args[] )
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
 		}
 
-		if (game.cardVertexDataUpdated) {
-			transformationData = game.cardVertexData.data();
-			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO);
-			glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
-			
+		//if (game.cardVertexDataUpdated) {
+		//	transformationData = game.cardVertexData.data();
+		//	glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO);
+		//	glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
+		//	
 
-			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
-			glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.cardVertexDataUpdated = false;
-		}
+		//	glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
+		//	glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
+		//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		//	game.cardVertexDataUpdated = false;
+		//}
 
-		if (game.candleStateChanged) {
-			auto it = std::find_if(candelsMeshMaterial.shaderAttributes.begin(), candelsMeshMaterial.shaderAttributes.end(), [](const InstancedSpriteShaderAttribute_Float& attribute) {
-				return attribute.id == 0;
-				});
-			
-			it->instancedData = game.candles.data();
-			it->instancedDataSize = game.candles.size();
-			glBindBuffer(GL_ARRAY_BUFFER, it->bufferHandle);
-			glBufferData(GL_ARRAY_BUFFER, it->instancedDataSize * sizeof(GLfloat), it->instancedData, GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-		}
+		//if (game.cardTextureTransformDataUpdated) {
+		//	textureTransformationData = game.textureOffsetData.data();
+		//	glBindBuffer(GL_ARRAY_BUFFER, gTextureTranslationLocation);
+		//	glBufferData(GL_ARRAY_BUFFER, game.textureOffsetData.size(), textureTransformationData, GL_STATIC_DRAW);
+		//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		//	cout << glGetError() << endl;
+		//	game.cardTextureTransformDataUpdated = false;
+		//}
 
-		render_fun();
+		//if (game.candleStateChanged) {
+		//	for (InstancedSpriteShaderAttribute_Float& attrib : candelsMeshMaterial.shaderAttributes) {
+		//		if (attrib.id == 0) {
+		//			attrib.instancedData = game.candles.data();
+		//			attrib.instancedDataSize = game.candles.size();
+		//			glBindBuffer(GL_ARRAY_BUFFER, attrib.bufferHandle);
+		//			glBufferData(GL_ARRAY_BUFFER, attrib.instancedDataSize * sizeof(GLfloat), attrib.instancedData, GL_STATIC_DRAW);
+		//			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		//			game.candleStateChanged = false;
+		//		}
+		//	}
+		//}
+
+		render_fun(&game);
 		SDL_GL_SwapWindow(window);
 	}
 
