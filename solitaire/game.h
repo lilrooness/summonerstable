@@ -5,13 +5,24 @@
 #include <time.h>
 #include <stdlib.h>
 
+//DOING NEXT!
+//TODO: Check that these functions actually work: 
+// - void pruneStacksCardReferences(Game* game);
+// - void pruneHandCardReferences(Game* game);
+//TODO: able to put card down in a stack
+
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
+
+struct CardReference {
+	int cardIndex;
+	int generation;
+};
 
 struct Card {
 	int number;
 	Suit suit;
 	bool deleted;
-	int stackIndex;
+	int generation;
 
 	int BufferIndex_cardTextureOffsetData;
 	int BufferIndex_cardVertexOffsetData;
@@ -26,6 +37,7 @@ struct Candle {
 
 struct Stack {
 	float x, y;
+	std::vector<CardReference> orderedCardReferences;
 };
 
 struct Game {
@@ -33,9 +45,12 @@ struct Game {
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
 	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
 
-	int grabbedCardIndex{ -1 };
+	CardReference grabbedCardReference;
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
+	std::vector<CardReference> handCards;
+
+	int handLimit;
 
 	std::vector<GLfloat> Buffer_cardsVertexOffsetData;
 	std::vector<GLfloat> Buffer_cardsTextureOffsetData;
@@ -65,42 +80,11 @@ void addCandles(Game* game);
 //void end_turn(Game* game);
 //void editCardData(Game* game, int cardIndex, Suit suit, int number);
 int createNewCard(Game* game, Suit suit, int number, int stackIndex);
-//
+bool validCardReference(Game* game, const CardReference& cardReference);
+Card* getCardByCardReference(Game* game, const CardReference& cardReference);
+void pruneStacksCardReferences(Game* game);
+void pruneHandCardReferences(Game* game);
 
-int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
-	Card card;
-	card.deleted = false;
-	card.number = number;
-	card.suit = suit;
-	card.stackIndex = stackIndex;
-	card.BufferIndex_cardVertexOffsetData = game->Buffer_cardsVertexOffsetData.size();
-	GLfloat x, y, z{0.0f};
-	if (stackIndex > -1) {
-		x = game->stacks[stackIndex].x;
-		y = game->stacks[stackIndex].y;
-	}
-	else {
-		x = 0.0f;
-		y = 0.0f;
-	}
-
-	game->Buffer_cardsVertexOffsetData.push_back(x);
-	game->Buffer_cardsVertexOffsetData.push_back(y);
-	game->Buffer_cardsVertexOffsetData.push_back(z);
-
-	card.BufferIndex_cardTextureOffsetData = game->Buffer_cardsTextureOffsetData.size();
-	game->Buffer_cardsTextureOffsetData.push_back(((GLfloat) suit) * (GLfloat)0.125f);
-	game->Buffer_cardsTextureOffsetData.push_back((GLfloat)0.0f);
-
-	card.BufferIndex_numberTextureOffsetData = game->Buffer_numbersTextureOffsetData.size();
-	game->Buffer_numbersTextureOffsetData.push_back(((GLfloat)number) * (GLfloat)0.1f);
-	game->Buffer_numbersTextureOffsetData.push_back((GLfloat)0.0f);
-
-	int cardIndex = game->cards.size();
-	game->cards.push_back(card);
-
-	return cardIndex;
-}
 
 void init_game(Game *game) {
 	srand(time(NULL));
@@ -111,11 +95,15 @@ void init_game(Game *game) {
 	Stack stack4{ 1000.0f, 200.0f };
 	Stack stack5{ 1200.0f, 600.0f };
 
+	game->handLimit = 5;
+
 	game->stacks.push_back(stack1);
 	game->stacks.push_back(stack2);
 	game->stacks.push_back(stack3);
 	game->stacks.push_back(stack4);
 	game->stacks.push_back(stack5);
+
+	game->grabbedCardReference = CardReference{ -1, -1 };
 
 	for (int i = 0; i < game->stacks.size(); i++) {
 		Suit cardSuit = static_cast<Suit>( rand() % 5);
@@ -139,6 +127,9 @@ void init_game(Game *game) {
 
 void tick(Game *game, float mouseX, float mouseY, float dt) {
 
+	pruneStacksCardReferences(game);
+	pruneHandCardReferences(game);
+
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
 	game->mouseX = mouseX;
@@ -150,6 +141,20 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	game->BufferRefreshFlag_candlesVertexOffsetData = false;
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesStateData = false;
+
+	//if card is grabbed but LMB is not down, release the card
+	if (!game->lmbDown && validCardReference(game, game->grabbedCardReference)) {
+		Card *grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
+		GLfloat grabbedX = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData];
+		GLfloat grabbedY = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData + 1];
+
+		//attempt to put the card in the hand
+		if (grabbedY < 50.0f) {
+			if (game->handCards.size() < game->handLimit) {
+				game->handCards.push_back(game->grabbedCardReference);
+			}
+		}
+	}
 
 	////tring to place card from table
 	//if (!game->lmbDown && game->grabbedCard > -1) {
@@ -254,6 +259,102 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	//	}
 	//}
 }
+
+void pruneStacksCardReferences(Game* game) {
+	for (Stack& stack : game->stacks) {
+		
+		auto it = stack.orderedCardReferences.begin();
+
+		while (it != stack.orderedCardReferences.end()) {
+			if (!validCardReference(game, (CardReference)*it)) {
+				it = stack.orderedCardReferences.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
+}
+
+void pruneHandCardReferences(Game* game) {
+	auto it = game->handCards.begin();
+
+	while (it != game->handCards.end()) {
+		if (!validCardReference(game, (CardReference)*it)) {
+			it = game->handCards.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+}
+
+Card* getCardByCardReference(Game* game, const CardReference& cardReference) {
+	if (validCardReference(game, cardReference)) {
+		return &game->cards[cardReference.cardIndex];
+	}
+
+	return nullptr;
+}
+
+bool validCardReference(Game* game, const CardReference& cardReference) {
+	if (cardReference.cardIndex < 0 || cardReference.generation < 0 || cardReference.cardIndex >= game->cards.size()) {
+		return false;
+	}
+
+	if (game->cards[cardReference.cardIndex].deleted) {
+		return false;
+	}
+
+	if (game->cards[cardReference.cardIndex].generation == cardReference.generation ) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
+	Card card;
+	card.generation = 0;
+	card.deleted = false;
+	card.number = number;
+	card.suit = suit;
+	card.BufferIndex_cardVertexOffsetData = game->Buffer_cardsVertexOffsetData.size();
+	GLfloat x, y, z{ 0.0f };
+	if (stackIndex > -1) {
+		x = game->stacks[stackIndex].x;
+		y = game->stacks[stackIndex].y;
+		
+	}
+	else {
+		x = 0.0f;
+		y = 0.0f;
+	}
+
+	game->Buffer_cardsVertexOffsetData.push_back(x);
+	game->Buffer_cardsVertexOffsetData.push_back(y);
+	game->Buffer_cardsVertexOffsetData.push_back(z);
+
+	card.BufferIndex_cardTextureOffsetData = game->Buffer_cardsTextureOffsetData.size();
+	game->Buffer_cardsTextureOffsetData.push_back(((GLfloat)suit) * (GLfloat)0.125f);
+	game->Buffer_cardsTextureOffsetData.push_back((GLfloat)0.0f);
+
+	card.BufferIndex_numberTextureOffsetData = game->Buffer_numbersTextureOffsetData.size();
+	game->Buffer_numbersTextureOffsetData.push_back(((GLfloat)number) * (GLfloat)0.1f);
+	game->Buffer_numbersTextureOffsetData.push_back((GLfloat)0.0f);
+
+	int cardIndex = game->cards.size();
+	game->cards.push_back(card);
+
+	if (stackIndex > -1) {
+		game->stacks[stackIndex].orderedCardReferences.push_back(CardReference{
+			cardIndex, card.generation });
+	}
+
+	return cardIndex;
+}
+
 //
 //int pickCardFromHand(Game* game, float x, float y) {
 //

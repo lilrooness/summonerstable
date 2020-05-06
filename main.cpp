@@ -273,7 +273,7 @@ int main( int argc, char* args[] )
 	
 	//The surface contained by the window
 	SDL_Surface* screenSurface = NULL;
-
+	
 	SDL_GLContext gcontext;
 
 	//Initialize SDL
