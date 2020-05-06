@@ -27,6 +27,8 @@ struct Game {
 
 	std::vector<GLfloat> numbersTextureOffsetData;
 
+	//1.0f for lit candle, 0.0f for unlit candle
+	std::vector<GLfloat> candles;
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
 	std::vector<Stack> handStacks;
@@ -35,6 +37,7 @@ struct Game {
 	
 	float cardWidth{ 0.25f * 512.0f }, cardHeight{ 0.5f * 512.0f };
 	bool cardVertexDataUpdated{ false };
+	bool candleStateChanged{ false };
 	bool rmbDown{ false}, lmbDown{ false };
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
 	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
@@ -54,6 +57,7 @@ Stack* getCardStack(Game* game, int cardIndex);
 bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex);
 int addCard(Game* game, Card card, GLfloat x, GLfloat y, GLfloat z);
 int pickCardFromHand(Game* game, float x, float y);
+void addCandles(Game* game);
 
 void init_game(Game *game) {
 	srand(time(NULL));
@@ -70,16 +74,7 @@ void init_game(Game *game) {
 	game->stacks.push_back(stack4);
 	game->stacks.push_back(stack5);
 
-	int candels = 1;
-
-	for (int i = 0; i < candels; i++) {
-		game->candelsVertexData.push_back((GLfloat)i * 100.0f + 100.0f);
-		game->candelsVertexData.push_back((GLfloat)500);
-		game->candelsVertexData.push_back((GLfloat)0.0f);
-
-		game->candelTextureOffsetData.push_back((GLfloat)0.0f);
-		game->candelTextureOffsetData.push_back((GLfloat)0.0f);
-	}
+	addCandles(game);
 
 	int cards = 5;
 	//init table cards
@@ -317,5 +312,35 @@ bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex) {
 	}
 	else {
 		return false;
+	}
+}
+
+void addCandles(Game* game) {
+
+	game->candelsVertexData.push_back(500.0f);
+	game->candelsVertexData.push_back(900);
+	game->candelsVertexData.push_back(0.0f);
+
+	game->candelsVertexData.push_back(1000.0f);
+	game->candelsVertexData.push_back(900);
+	game->candelsVertexData.push_back(0.0f);
+
+	game->candelsVertexData.push_back(300.0f);
+	game->candelsVertexData.push_back(300);
+	game->candelsVertexData.push_back(0.0f);
+
+	game->candelsVertexData.push_back(1175.0f);
+	game->candelsVertexData.push_back(300);
+	game->candelsVertexData.push_back(0.0f);
+
+	game->candelsVertexData.push_back(750.0f);
+	game->candelsVertexData.push_back(150);
+	game->candelsVertexData.push_back(0.0f);
+
+	for (int i = 0; i < 5; i++) {
+		game->candelTextureOffsetData.push_back(i * 64.0f);
+		game->candelTextureOffsetData.push_back(0.0f);
+		
+		game->candles.push_back(1.0f);
 	}
 }

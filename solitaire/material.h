@@ -4,7 +4,8 @@
 #include <GL/GLU.h>
 
 struct InstancedSpriteShaderAttribute_Float {
-	char* string;
+	int id;
+	const char* name;
 	GLuint location;
 	GLfloat *instancedData;
 	int instancedDataSize;

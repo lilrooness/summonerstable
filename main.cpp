@@ -205,6 +205,14 @@ bool initGL() {
 			std::vector<InstancedSpriteShaderAttribute_Float>(),
 			&numbersMeshMaterial);
 
+		InstancedSpriteShaderAttribute_Float candleOnShaderAttrib;
+		candleOnShaderAttrib.id = 0;
+		candleOnShaderAttrib.name = "candleOn";
+		candleOnShaderAttrib.dim = 1;
+		candleOnShaderAttrib.location = glGetAttribLocation(gCandelProgramID, candleOnShaderAttrib.name);
+		candleOnShaderAttrib.instancedDataSize = game.candles.size();
+		candleOnShaderAttrib.instancedData = game.candles.data();
+
 		initInstancedSpriteMeshMaterial_2D(
 			gVertexPos2DLocation,
 			gTextureTranslationLocation,
@@ -213,7 +221,7 @@ bool initGL() {
 			candelVertexData, 20,
 			candelsTextureTransformationData, game.candelTextureOffsetData.size(),
 			candelsTransformationData, game.candelsVertexData.size(),
-			std::vector<InstancedSpriteShaderAttribute_Float>(),
+			std::vector<InstancedSpriteShaderAttribute_Float> { candleOnShaderAttrib },
 			&candelsMeshMaterial);
 	}
 	return success;
@@ -372,6 +380,19 @@ int main( int argc, char* args[] )
 
 			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
 			glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.cardVertexDataUpdated = false;
+		}
+
+		if (game.candleStateChanged) {
+			auto it = std::find_if(candelsMeshMaterial.shaderAttributes.begin(), candelsMeshMaterial.shaderAttributes.end(), [](const InstancedSpriteShaderAttribute_Float& attribute) {
+				return attribute.id == 0;
+				});
+			
+			it->instancedData = game.candles.data();
+			it->instancedDataSize = game.candles.size();
+			glBindBuffer(GL_ARRAY_BUFFER, it->bufferHandle);
+			glBufferData(GL_ARRAY_BUFFER, it->instancedDataSize * sizeof(GLfloat), it->instancedData, GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 
