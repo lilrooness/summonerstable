@@ -6,11 +6,9 @@
 #include <stdlib.h>
 #include <algorithm>
 
-//DOING NEXT!
 //TODO: Check that these functions actually work:
 // - void pruneStacksCardReferences(Game* game);
 // - void pruneHandCardReferences(Game* game);
-//TODO: able to put card down in a stack
 
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
 
@@ -49,6 +47,8 @@ struct Game {
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
 	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
 
+	bool turnEndedByPlayer = false;
+
 	CardReference grabbedCardReference;
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
@@ -75,8 +75,6 @@ void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 void addCandles(Game* game);
-//void end_turn(Game* game);
-//void editCardData(Game* game, int cardIndex, Suit suit, int number);
 int createNewCard(Game* game, Suit suit, int number, int stackIndex);
 bool validCardReference(Game* game, const CardReference& cardReference);
 Card* getCardByCardReference(Game* game, const CardReference& cardReference);
@@ -89,6 +87,110 @@ bool cardReferencesMatch(const CardReference& ref1, const CardReference& ref2);
 int pickCard(Game* game, float mouseX, float mouseY);
 void resetCardsAtStackPositions(Game* game);
 bool cardFitsOnStack(Game* game, const Stack& stack, const CardReference& cardReference);
+void endTurn(Game* game);
+int countRemainingCandles(Game* game);
+CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, float y);
+bool markCardAsDeleted(Game* game, const CardReference& cardReference);
+
+bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
+
+	if (validCardReference(game, cardReference)) {
+		Card *card = getCardByCardReference(game, cardReference);
+		card->deleted = true;
+		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = -300;
+		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = -300;
+		return true;
+	}
+
+	return false;
+}
+
+CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, float y) {
+	for (int i = 0; i < game->cards.size(); i++) {
+		if (game->cards[i].deleted) {
+			game->cards[i].generation += 1;
+			game->cards[i].deleted = false;
+			game->cards[i].suit = suit;
+			game->cards[i].number = number;
+
+			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData] = 0.0f;
+			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 1] = 0.0f;
+			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 2] = 0.0f;
+
+			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData] = (GLfloat)suit * (GLfloat)0.125f;
+			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData + 1] = (GLfloat)0.0f;
+
+			game->Buffer_numbersTextureOffsetData[game->cards[i].BufferIndex_numberTextureOffsetData] = (GLfloat)number * (GLfloat)0.1f;
+			game->Buffer_numbersTextureOffsetData[game->cards[i].BufferIndex_numberTextureOffsetData + 1] = (GLfloat)0.0f;
+
+			CardReference reference;
+			reference.cardIndex = i;
+			reference.generation = game->cards[i].generation;
+
+			return reference;
+		}
+	}
+
+	int cardIndex = createNewCard(game, suit, number, -1);
+
+	CardReference reference;
+	reference.generation = game->cards[cardIndex].generation;
+	reference.cardIndex = cardIndex;
+}
+
+void endTurn(Game* game) {
+	int candlesRemaining = countRemainingCandles(game);
+	for (Stack& stack : game->stacks) {
+		if (stack.orderedCardReferences.size() == 1) {
+			candlesRemaining = max(0, candlesRemaining - 1);
+		}
+	}
+
+	for (int i = 0; i < game->Buffer_candlesStateData.size(); i++) {
+		if (candlesRemaining - i > 0) {
+			game->Buffer_candlesStateData[i] = 1;
+		}
+		else {
+			game->Buffer_candlesStateData[i] = 0;
+		}
+	}
+	game->BufferRefreshFlag_candlesStateData = true;
+
+	for (Stack& stack : game->stacks) {
+		for (const CardReference& cardReference : stack.orderedCardReferences) {
+			if (validCardReference(game, cardReference)) {
+				markCardAsDeleted(game, cardReference);
+			}
+		}
+	}
+	pruneStacksCardReferences(game);
+
+	int cardsToDeal = 5;
+
+	for (int i = 0; i < cardsToDeal; i++) {
+		Suit cardSuit = static_cast<Suit>(rand() % 5);
+		int number = (rand() % 10) + 1;
+		CardReference cardReference = reuseOrCreateNewCard(game, cardSuit, number, 0.0f, 0.0f);
+		game->stacks[i].orderedCardReferences.push_back(cardReference);
+	}
+
+	game->BufferRefreshFlag_cardsTextureOffsetData = true;
+	game->BufferRefreshFlag_numbersTextureOffsetData = true;
+	game->BufferRefreshFlag_cardsVertexOffsetData = true;
+
+	game->turnEndedByPlayer = false;
+}
+
+int countRemainingCandles(Game* game) {
+	int count{ 0 };
+	for (GLfloat i : game->Buffer_candlesStateData) {
+		if (i == 1.0f) {
+			count++;
+		}
+	}
+
+	return count;
+}
 
 void init_game(Game *game) {
 	srand(time(NULL));
@@ -117,16 +219,12 @@ void init_game(Game *game) {
 
 	addCandles(game);
 
-	//int handCards = 3;
-	//
-	//for (int i = 0; i < handCards; i++) {
-	//	Suit cardSuit = static_cast<Suit>(rand() % 5);
-	//	Card card{ i, cardSuit};
-	//	int cardIndex = addCard(game, card, 150.0f * i + 100, 70.0f, 0.0f);
-	//	game->hand.push_back(cardIndex);
-	//}
-
-	//setCardsZPositionAtStackPosition(game);
+	game->BufferRefreshFlag_cardsVertexOffsetData = false;
+	game->BufferRefreshFlag_cardsTextureOffsetData = false;
+	game->BufferRefreshFlag_numbersTextureOffsetData = false;
+	game->BufferRefreshFlag_candlesVertexOffsetData = false;
+	game->BufferRefreshFlag_candlesTextureOffsetData = false;
+	game->BufferRefreshFlag_candlesStateData = false;
 }
 
 void tick(Game *game, float mouseX, float mouseY, float dt) {
@@ -142,6 +240,10 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	game->BufferRefreshFlag_candlesVertexOffsetData = false;
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesStateData = false;
+
+	if (game->turnEndedByPlayer) {
+		endTurn(game);
+	}
 
 	if (game->lmbDown && validCardReference(game, game->grabbedCardReference)) {
 		GLfloat xDiff = game->mouseX - game->lastMouseX;

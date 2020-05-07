@@ -18,8 +18,7 @@ struct InstancedSpriteMeshMaterial2D {
 	GLuint vertexDataVBO;
 	GLuint textureDataVBO;
 	GLuint textureOffsetVBO_instanced;
-	GLuint positionOffsetVBO;
-	GLuint textureOffsetVBO;
+	GLuint positionOffsetVBO_instanced;
 	GLuint indexDataBuffer;
 	std::vector<InstancedSpriteShaderAttribute_Float> shaderAttributes;
 };
@@ -44,8 +43,8 @@ GLenum initInstancedSpriteMeshMaterial_2D(
 	glEnableVertexAttribArray(gTextureTranslationLocation);
 	glVertexAttribDivisor(gTextureTranslationLocation, 1);
 
-	glGenBuffers(1, &out_meshMaterial->positionOffsetVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, out_meshMaterial->positionOffsetVBO);
+	glGenBuffers(1, &out_meshMaterial->positionOffsetVBO_instanced);
+	glBindBuffer(GL_ARRAY_BUFFER, out_meshMaterial->positionOffsetVBO_instanced);
 	glBufferData(GL_ARRAY_BUFFER, positionOffsetsSize * sizeof(GLfloat), positionOffsets, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(gVertexTranslationLocation, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);

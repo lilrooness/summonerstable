@@ -340,9 +340,9 @@ int main( int argc, char* args[] )
 				if (e.key.keysym.sym == SDLK_ESCAPE) {
 					quit = true;
 				}
-				//else if (e.key.keysym.sym == SDLK_SPACE) {
-				//	end_turn(&game);
-				//}
+				else if (e.key.keysym.sym == SDLK_SPACE) {
+					game.turnEndedByPlayer = true;
+				}
 			}
 			else if (e.type == SDL_MOUSEMOTION) {
 
@@ -372,37 +372,38 @@ int main( int argc, char* args[] )
 		}
 
 		if (game.BufferRefreshFlag_cardsVertexOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO);
+			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO_instanced);
 			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsVertexOffsetData.data(), GL_STATIC_DRAW);
 			
 
-			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
+			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO_instanced);
 			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsVertexOffsetData.data(), GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			game.BufferRefreshFlag_cardsVertexOffsetData = false;
 		}
 
-		//if (game.cardTextureTransformDataUpdated) {
-		//	textureTransformationData = game.textureOffsetData.data();
-		//	glBindBuffer(GL_ARRAY_BUFFER, gTextureTranslationLocation);
-		//	glBufferData(GL_ARRAY_BUFFER, game.textureOffsetData.size(), textureTransformationData, GL_STATIC_DRAW);
-		//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-		//	cout << glGetError() << endl;
-		//	game.cardTextureTransformDataUpdated = false;
-		//}
+		if (game.BufferRefreshFlag_cardsTextureOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.textureOffsetVBO_instanced);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsTextureOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_cardsTextureOffsetData = false;
+		}
 
-		//if (game.candleStateChanged) {
-		//	for (InstancedSpriteShaderAttribute_Float& attrib : candelsMeshMaterial.shaderAttributes) {
-		//		if (attrib.id == 0) {
-		//			attrib.instancedData = game.candles.data();
-		//			attrib.instancedDataSize = game.candles.size();
-		//			glBindBuffer(GL_ARRAY_BUFFER, attrib.bufferHandle);
-		//			glBufferData(GL_ARRAY_BUFFER, attrib.instancedDataSize * sizeof(GLfloat), attrib.instancedData, GL_STATIC_DRAW);
-		//			glBindBuffer(GL_ARRAY_BUFFER, 0);
-		//			game.candleStateChanged = false;
-		//		}
-		//	}
-		//}
+		if (game.BufferRefreshFlag_numbersTextureOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.textureOffsetVBO_instanced);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_numbersTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_numbersTextureOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_numbersTextureOffsetData = false;
+		}
+
+		if (game.BufferRefreshFlag_candlesStateData) {
+			candelsMeshMaterial.shaderAttributes[0].instancedData = game.Buffer_candlesStateData.data();
+			candelsMeshMaterial.shaderAttributes[0].instancedDataSize = game.Buffer_candlesStateData.size();
+			glBindBuffer(GL_ARRAY_BUFFER, candelsMeshMaterial.shaderAttributes[0].bufferHandle);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesStateData.size() * sizeof(GLfloat), game.Buffer_candlesStateData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_candlesStateData = false;
+		}
 
 		render_fun(&game);
 		SDL_GL_SwapWindow(window);
