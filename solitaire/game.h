@@ -4,14 +4,18 @@
 #include <GL/GLU.h>
 #include <time.h>
 #include <stdlib.h>
+#include <algorithm>
 
 //DOING NEXT!
-//TODO: Check that these functions actually work: 
+//TODO: Check that these functions actually work:
 // - void pruneStacksCardReferences(Game* game);
 // - void pruneHandCardReferences(Game* game);
 //TODO: able to put card down in a stack
 
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
+
+const float CARD_WIDTH = 0.25f * 512.0f;
+const float	CARD_HEIGHT = 0.5f * 512.0f;
 
 struct CardReference {
 	int cardIndex;
@@ -69,13 +73,7 @@ struct Game {
 //
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
-//int pickCardFromTableStack(Game* game, float x, float y);
-//int cardVertexIndex(int cardId);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
-//void setCardsZPositionAtStackPosition(Game* game);
-//Stack* getCardStack(Game* game, int cardIndex);
-//bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex);
-//int pickCardFromHand(Game* game, float x, float y);
 void addCandles(Game* game);
 //void end_turn(Game* game);
 //void editCardData(Game* game, int cardIndex, Suit suit, int number);
@@ -84,7 +82,12 @@ bool validCardReference(Game* game, const CardReference& cardReference);
 Card* getCardByCardReference(Game* game, const CardReference& cardReference);
 void pruneStacksCardReferences(Game* game);
 void pruneHandCardReferences(Game* game);
-
+int getCardStackIndex(Game* game, const CardReference& card);
+void removeCardFromHand(Game* game, const CardReference& cardReference);
+void removeCardFromStack(Game* game, const CardReference& cardReference, int stackIndex);
+bool cardReferencesMatch(const CardReference& ref1, const CardReference& ref2);
+int pickCard(Game* game, float mouseX, float mouseY);
+void resetCardsAtStackPositions(Game* game);
 
 void init_game(Game *game) {
 	srand(time(NULL));
@@ -127,9 +130,6 @@ void init_game(Game *game) {
 
 void tick(Game *game, float mouseX, float mouseY, float dt) {
 
-	pruneStacksCardReferences(game);
-	pruneHandCardReferences(game);
-
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
 	game->mouseX = mouseX;
@@ -142,6 +142,16 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesStateData = false;
 
+	if (game->lmbDown && validCardReference(game, game->grabbedCardReference)) {
+		GLfloat xDiff = game->mouseX - game->lastMouseX;
+		GLfloat yDiff = game->mouseY - game->lastMouseY;
+
+		Card* grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
+		game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData] += xDiff;
+		game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData + 1] += yDiff;
+		game->BufferRefreshFlag_cardsVertexOffsetData = true;
+	}
+
 	//if card is grabbed but LMB is not down, release the card
 	if (!game->lmbDown && validCardReference(game, game->grabbedCardReference)) {
 		Card *grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
@@ -151,113 +161,131 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		//attempt to put the card in the hand
 		if (grabbedY < 50.0f) {
 			if (game->handCards.size() < game->handLimit) {
-				game->handCards.push_back(game->grabbedCardReference);
+				int originalStackIndex = getCardStackIndex(game, game->grabbedCardReference);
+
+				/*
+					if it was in a stack, remove it and put it in the hand
+					otherwise, assume that It was in the hand before it was picked up
+					so we dont need to do anything, as the card will be droppped anyway
+				*/
+				if (originalStackIndex > -1) {
+					removeCardFromStack(game, game->grabbedCardReference, originalStackIndex);
+					game->handCards.push_back(game->grabbedCardReference);
+				}
+			}
+		}
+		//attempt to put the card down on a stack
+		else {
+			int originalStackIndex = getCardStackIndex(game, game->grabbedCardReference);
+			for (Stack& stack : game->stacks) {
+				if (boxCollision(grabbedX, grabbedY, CARD_WIDTH, CARD_HEIGHT, stack.x, stack.y, CARD_WIDTH, CARD_HEIGHT)) {
+					//remove card from previous stack and place in new stack (even if they are the same stack)
+					if (originalStackIndex > -1) {
+						removeCardFromStack(game, game->grabbedCardReference, originalStackIndex);
+						stack.orderedCardReferences.push_back(game->grabbedCardReference);
+					}
+					//Card wasn't in a stack, meaning that it came from the hand. Remove card from hand and place in new stack
+					else {
+						removeCardFromHand(game, game->grabbedCardReference);
+						stack.orderedCardReferences.push_back(game->grabbedCardReference);
+					}
+				}
+			}
+		}
+
+		game->grabbedCardReference.cardIndex = -1;
+		game->grabbedCardReference.generation = -1;
+	}
+	
+	int pickedCardIndex = pickCard(game, game->mouseX, game->mouseY);
+	if (game->lmbDown && !validCardReference(game, game->grabbedCardReference) && pickedCardIndex > -1) {
+		CardReference cardReference;
+		cardReference.cardIndex = pickedCardIndex;
+		cardReference.generation = game->cards[pickedCardIndex].generation;
+		game->grabbedCardReference = cardReference;
+	}
+
+	pruneStacksCardReferences(game);
+	pruneHandCardReferences(game);
+
+	resetCardsAtStackPositions(game);
+}
+
+void resetCardsAtStackPositions(Game* game) {
+	float zIncrement = 0.1f;
+	for (const Stack& stack : game->stacks) {
+		for (int i = 0; i < stack.orderedCardReferences.size(); i++) {
+			bool cardGrabbed = cardReferencesMatch(stack.orderedCardReferences[i], game->grabbedCardReference);
+			if (!cardGrabbed) {
+				Card* card = getCardByCardReference(game, stack.orderedCardReferences[i]);
+				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = stack.x;
+				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = stack.y;
+				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = i * zIncrement;
 			}
 		}
 	}
 
-	////tring to place card from table
-	//if (!game->lmbDown && game->grabbedCard > -1) {
-	//	//check for collisions with stacks
-	//	GLfloat grabbedX{ game->cardVertexData[cardVertexIndex(game->grabbedCard)] };
-	//	GLfloat grabbedY{ game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1]};
+	game->BufferRefreshFlag_cardsVertexOffsetData = true;
+}
 
-	//	bool cardIsDown = false;
 
-	//	if (grabbedY < 50.0f) {
-	//		if (game->hand.size() < 5) {
-	//			Stack* originalStack = getCardStack(game, game->grabbedCard);
-	//			auto stackIt = std::find(originalStack->cardIndexes.begin(), originalStack->cardIndexes.end(), game->grabbedCard);
-	//			originalStack->cardIndexes.erase(stackIt);
-	//			
-	//			auto tableIt = std::find(game->table.begin(), game->table.end(), game->grabbedCard);
-	//			game->table.erase(tableIt);
+int pickCard(Game *game, float mouseX, float mouseY) {
+	std::vector<int> collidedCardIndexes;
+	for (int i = 0; i < game->cards.size(); i++) {
+		int vertexBufferIndex = game->cards[i].BufferIndex_cardVertexOffsetData;
+		float x{ game->Buffer_cardsVertexOffsetData[vertexBufferIndex] };
+		float y{ game->Buffer_cardsVertexOffsetData[vertexBufferIndex + 1] };
+		if (mouseX > x && mouseX < x + CARD_WIDTH && mouseY > y && mouseY < y + CARD_HEIGHT && !game->cards[i].deleted) {
+			collidedCardIndexes.push_back(i);
+		}
+	}
 
-	//			game->hand.push_back(game->grabbedCard);
-	//			cardIsDown = true;
-	//		}
-	//	}
+	if (collidedCardIndexes.empty()) {
+		return -1;
+	}
+	else {
+		//sort the cards by their Z value and pick the top one
+		std::sort(collidedCardIndexes.begin(), collidedCardIndexes.end(), [game](int indexA, int indexB) {
+			float zA = game->Buffer_cardsVertexOffsetData[game->cards[indexA].BufferIndex_cardVertexOffsetData + 2];
+			float zB = game->Buffer_cardsVertexOffsetData[game->cards[indexB].BufferIndex_cardVertexOffsetData + 2];
+			return zA > zB;
+		});
+		return collidedCardIndexes[0];
+	}
+	
+}
 
-	//	if (!cardIsDown) {
-	//		for (Stack& stack : game->stacks) {
-	//			if (boxCollision(grabbedX, grabbedY, game->cardWidth, game->cardHeight, stack.x, stack.y, game->cardWidth, game->cardHeight) && cardFitsOnStack(game, stack, game->grabbedCard)) {
-	//				game->cardVertexData[cardVertexIndex(game->grabbedCard)] = stack.x;
-	//				game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] = stack.y;
+void removeCardFromHand(Game* game, const CardReference& cardReference) {
+	auto checker = [=](const CardReference& cardRefIt) {
+		return validCardReference(game, cardReference) && validCardReference(game, cardRefIt) && cardReferencesMatch(cardReference, cardRefIt);
+	};
 
-	//				Stack* orignal_stack = getCardStack(game, game->grabbedCard);
-	//				auto it = std::find(orignal_stack->cardIndexes.begin(), orignal_stack->cardIndexes.end(), game->grabbedCard);
-	//				orignal_stack->cardIndexes.erase(it);
-	//				stack.cardIndexes.push_back(game->grabbedCard);
-	//			}
-	//			else {
-	//				Stack* orignal_stack = getCardStack(game, game->grabbedCard);
-	//				game->cardVertexData[cardVertexIndex(game->grabbedCard)] = orignal_stack->x;
-	//				game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] = orignal_stack->y;
-	//			}
-	//		}
-	//	}
+	auto it = std::find_if(game->handCards.begin(), game->handCards.end(), checker);
 
-	//	setCardsZPositionAtStackPosition(game);
-	//	game->cardGrabbedData[game->grabbedCard] = (GLboolean)false;
-	//	game->grabbedCard = -1;
-	//	game->cardVertexDataUpdated = true;
-	//}
-	////trying to place card from hand
-	//else if (!game->lmbDown && game->grabbedHandCard > -1) {
-	//	//check for collisions with stacks
-	//	GLfloat grabbedX{ game->cardVertexData[cardVertexIndex(game->grabbedHandCard)] };
-	//	GLfloat grabbedY{ game->cardVertexData[cardVertexIndex(game->grabbedHandCard) + 1] };
+	game->handCards.erase(it);
+}
 
-	//	for (Stack& stack : game->stacks) {
-	//		if (boxCollision(grabbedX, grabbedY, game->cardWidth, game->cardHeight, stack.x, stack.y, game->cardWidth, game->cardHeight) && cardFitsOnStack(game, stack, game->grabbedHandCard)) {
-	//			game->cardVertexData[cardVertexIndex(game->grabbedHandCard)] = stack.x;
-	//			game->cardVertexData[cardVertexIndex(game->grabbedHandCard) + 1] = stack.y;
-	//			game->cardVertexDataUpdated = true;
-	//			game->table.push_back(game->grabbedHandCard);
-	//			stack.cardIndexes.push_back(game->grabbedHandCard);
+void removeCardFromStack(Game* game, const CardReference& cardReference, int stackIndex) {
+	auto checker = [=](const CardReference& cardRefIt) {
+		return validCardReference(game, cardReference) && validCardReference(game, cardRefIt) && cardReferencesMatch(cardReference, cardRefIt);
+	};
 
-	//			auto handIt = std::find(game->hand.begin(), game->hand.end(), game->grabbedHandCard);
-	//			game->hand.erase(handIt);
-	//		}
-	//	}
+	auto it = std::find_if(game->stacks[stackIndex].orderedCardReferences.begin(), game->stacks[stackIndex].orderedCardReferences.end(), checker);
 
-	//	setCardsZPositionAtStackPosition(game);
-	//	game->cardGrabbedData[game->grabbedHandCard] = (GLboolean)false;
-	//	game->grabbedHandCard = -1;
-	//	game->cardVertexDataUpdated = true;
+	game->stacks[stackIndex].orderedCardReferences.erase(it);
+}
 
-	//}
+int getCardStackIndex(Game *game, const CardReference& cardReference) {
+	for (int i = 0; i < game->stacks.size(); i++) {
+		auto checker = [=](const CardReference& cardRefIt) {
+			return validCardReference(game, cardReference) && validCardReference(game, cardRefIt) && cardReferencesMatch(cardReference, cardRefIt);
+		};
+		if (std::find_if(game->stacks[i].orderedCardReferences.begin(), game->stacks[i].orderedCardReferences.end(), checker) != game->stacks[i].orderedCardReferences.end()) {
+			return i;
+		}
+	}
 
-	//if (game->grabbedCard > -1) {
-	//	float mouseMovementX = game->mouseX - game->lastMouseX;
-	//	float mouseMovementY = game->mouseY - game->lastMouseY;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedCard)] += mouseMovementX;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedCard) + 1] += mouseMovementY;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedCard) + 2] = 10.0f;
-	//	game->cardVertexDataUpdated = true;
-	//}
-	//else if (game->grabbedHandCard > -1) {
-	//	float mouseMovementX = game->mouseX - game->lastMouseX;
-	//	float mouseMovementY = game->mouseY - game->lastMouseY;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedHandCard)] += mouseMovementX;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedHandCard) + 1] += mouseMovementY;
-	//	game->cardVertexData[cardVertexIndex(game->grabbedHandCard) + 2] = 10.0f;
-	//	game->cardVertexDataUpdated = true;
-	//}
-	//else if (game->lmbDown) {
-	//	int pickedCard = pickCardFromTableStack(game, game->mouseX, game->mouseY);
-	//	if (pickedCard > -1) {
-	//		game->grabbedCard = pickedCard;
-	//		game->cardGrabbedData[pickedCard] = (GLboolean)true;
-	//	}
-	//	else {
-	//		pickedCard = pickCardFromHand(game, game->mouseX, game->mouseY);
-	//		if (pickedCard > -1) {
-	//			game->grabbedHandCard = pickedCard;
-	//			game->cardGrabbedData[pickedCard] = (GLboolean)true;
-	//		}
-	//	}
-	//}
+	return -1;
 }
 
 void pruneStacksCardReferences(Game* game) {
@@ -314,6 +342,10 @@ bool validCardReference(Game* game, const CardReference& cardReference) {
 	}
 }
 
+bool cardReferencesMatch(const CardReference& ref1, const CardReference& ref2) {
+	return (ref1.generation == ref2.generation && ref1.cardIndex == ref2.cardIndex);
+}
+
 int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	Card card;
 	card.generation = 0;
@@ -355,92 +387,16 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	return cardIndex;
 }
 
-//
-//int pickCardFromHand(Game* game, float x, float y) {
-//
-//	for (int i : game->hand) {
-//		GLfloat posx = game->cardVertexData[cardVertexIndex(i)];
-//		GLfloat posy = game->cardVertexData[cardVertexIndex(i) + 1];
-//
-//		if (x > posx && x < posx + game->cardWidth && y > posy && y < posy + game->cardHeight) {
-//			return i;
-//		}
-//	}
-//
-//	return -1;
-//}
-//
-//int pickCardFromTableStack(Game* game, float x, float y) {
-//	std::vector<int> collidedCardIndexes;
-//
-//	for (int i : game->table) {
-//		GLfloat posx = game->cardVertexData[cardVertexIndex(i)];
-//		GLfloat posy = game->cardVertexData[cardVertexIndex(i) + 1];
-//
-//		if (x > posx && x < posx + game->cardWidth && y > posy && y < posy + game->cardHeight) {
-//			collidedCardIndexes.push_back(i);
-//		}
-//	}
-//
-//	if (collidedCardIndexes.size() == 0) {
-//		return -1;
-//	}
-//	else {
-//		Stack* stack = getCardStack(game, collidedCardIndexes[0]);
-//		return stack->cardIndexes.back();
-//	}
-//}
-//
-//int cardVertexIndex(int cardId) {
-//	return cardId * 3;
-//}
-//
-//bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
-//	float x1Center = x1 + w1 / 2;
-//	float y1Center = y1 + h1 / 2;
-//
-//	float x2Center = x2 + w2 / 2;
-//	float y2Center = y2 + h2 / 2;
-//
-//	return (abs(x1Center - x2Center) < ((w1 + w2) / 2) && abs(y1Center - y2Center) < ((h1 + h2) / 2));
-//}
-//
-//void setCardsZPositionAtStackPosition(Game* game) {
-//	GLfloat zIncrement = 0.1f;
-//	for (Stack stack : game->stacks) {
-//		for (int i = 0; i < stack.cardIndexes.size(); i++) {
-//			int cardIndex = stack.cardIndexes[i];
-//			game->cardVertexData[cardVertexIndex(cardIndex) + 2] = (GLfloat)i * (GLfloat)zIncrement;
-//			game->cardVertexDataUpdated = true;
-//		}
-//	}
-//}
-//
-//Stack* getCardStack(Game* game, int cardIndex) {
-//	for (Stack& stack : game->stacks) {
-//		if (std::find(stack.cardIndexes.begin(), stack.cardIndexes.end(), cardIndex) != stack.cardIndexes.end()) {
-//			return &stack;
-//		}
-//	}
-//
-//	return nullptr;
-//}
-//
-//bool cardFitsOnStack(Game *game, Stack& stack, int cardIndex) {
-//
-//	if (stack.cardIndexes.size() == 0) {
-//		return true;
-//	}
-//
-//	int topCardIndex = stack.cardIndexes.back();
-//	if (game->cards[topCardIndex].suit == game->cards[cardIndex].suit) {
-//		return true;
-//	}
-//	else {
-//		return false;
-//	}
-//}
-//
+bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
+	float x1Center = x1 + w1 / 2;
+	float y1Center = y1 + h1 / 2;
+
+	float x2Center = x2 + w2 / 2;
+	float y2Center = y2 + h2 / 2;
+
+	return (abs(x1Center - x2Center) < ((w1 + w2) / 2) && abs(y1Center - y2Center) < ((h1 + h2) / 2));
+}
+
 void addCandles(Game* game) {
 	Candle candle1;
 	candle1.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
@@ -496,13 +452,6 @@ void addCandles(Game* game) {
 	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
 	candle5.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
-
-	//for (int i = 0; i < 5; i++) {
-	//	//game->Buffer_candlesTextureOffsetData.push_back(i * 64.0f);
-	//	//game->Buffer_candlesTextureOffsetData.push_back(0.0f);
-	//	//
-	//	game->Buffer_candlesStateData.push_back(1.0f);
-	//}
 }
 //
 //void end_turn(Game* game) {

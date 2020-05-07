@@ -371,17 +371,16 @@ int main( int argc, char* args[] )
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
 		}
 
-		//if (game.cardVertexDataUpdated) {
-		//	transformationData = game.cardVertexData.data();
-		//	glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO);
-		//	glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
-		//	
+		if (game.BufferRefreshFlag_cardsVertexOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsVertexOffsetData.data(), GL_STATIC_DRAW);
+			
 
-		//	glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
-		//	glBufferData(GL_ARRAY_BUFFER, game.cardVertexData.size() * sizeof(GLfloat), transformationData, GL_STATIC_DRAW);
-		//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-		//	game.cardVertexDataUpdated = false;
-		//}
+			glBindBuffer(GL_ARRAY_BUFFER, numbersMeshMaterial.positionOffsetVBO);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsVertexOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_cardsVertexOffsetData = false;
+		}
 
 		//if (game.cardTextureTransformDataUpdated) {
 		//	textureTransformationData = game.textureOffsetData.data();
