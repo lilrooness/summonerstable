@@ -37,12 +37,6 @@ unsigned int cardTexture;
 unsigned int cardNumberTexture;
 unsigned int candelTexture;
 
-//GLfloat *transformationData;
-//GLfloat *textureTransformationData;
-//GLfloat *numbersTextureTransformationData;
-//GLfloat* candelsTextureTransformationData;
-//GLfloat* candelsTransformationData;
-
 InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D numbersMeshMaterial;
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
