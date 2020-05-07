@@ -88,6 +88,7 @@ void removeCardFromStack(Game* game, const CardReference& cardReference, int sta
 bool cardReferencesMatch(const CardReference& ref1, const CardReference& ref2);
 int pickCard(Game* game, float mouseX, float mouseY);
 void resetCardsAtStackPositions(Game* game);
+bool cardFitsOnStack(Game* game, const Stack& stack, const CardReference& cardReference);
 
 void init_game(Game *game) {
 	srand(time(NULL));
@@ -178,7 +179,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		else {
 			int originalStackIndex = getCardStackIndex(game, game->grabbedCardReference);
 			for (Stack& stack : game->stacks) {
-				if (boxCollision(grabbedX, grabbedY, CARD_WIDTH, CARD_HEIGHT, stack.x, stack.y, CARD_WIDTH, CARD_HEIGHT)) {
+				if (boxCollision(grabbedX, grabbedY, CARD_WIDTH, CARD_HEIGHT, stack.x, stack.y, CARD_WIDTH, CARD_HEIGHT) && cardFitsOnStack(game, stack, game->grabbedCardReference)) {
 					//remove card from previous stack and place in new stack (even if they are the same stack)
 					if (originalStackIndex > -1) {
 						removeCardFromStack(game, game->grabbedCardReference, originalStackIndex);
@@ -209,6 +210,23 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	pruneHandCardReferences(game);
 
 	resetCardsAtStackPositions(game);
+}
+
+bool cardFitsOnStack(Game *game, const Stack& stack, const CardReference& cardReference) {
+	if (stack.orderedCardReferences.empty()) {
+		return true;
+	}
+
+	const CardReference& topCardReference = stack.orderedCardReferences[stack.orderedCardReferences.size() - 1];
+	Card *topCard = getCardByCardReference(game, topCardReference);
+	Card* card = getCardByCardReference(game, cardReference);
+	
+	if (topCard != nullptr && card != nullptr && topCard->suit == card->suit) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 void resetCardsAtStackPositions(Game* game) {
