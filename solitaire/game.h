@@ -5,18 +5,34 @@
 #include <time.h>
 #include <stdlib.h>
 #include <algorithm>
+#include "animation.h";
 
+//TODO: Split card tick update operation out into a seperate function and file
+//TODO: Cancel animation and reset scale value when mouse is not hovering
 //TODO: Check that these functions actually work:
 // - void pruneStacksCardReferences(Game* game);
 // - void pruneHandCardReferences(Game* game);
 
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
 
+enum CardAnimationType { SCALE };
+
 const float CARD_WIDTH = 0.25f * 512.0f;
 const float	CARD_HEIGHT = 0.5f * 512.0f;
 
+struct IndexReference {
+	int index;
+	int generation;
+};
+
 struct CardReference {
 	int cardIndex;
+	int generation;
+};
+
+struct CardAnimation {
+	FloatAnimation animation;
+	CardReference cardReference;
 	int generation;
 };
 
@@ -25,9 +41,12 @@ struct Card {
 	Suit suit;
 	bool deleted;
 	int generation;
+	bool mouseIsHovering{false};
+	IndexReference hoverAnimationReference;
 
 	int BufferIndex_cardTextureOffsetData;
 	int BufferIndex_cardVertexOffsetData;
+	int BufferIndex_cardScaleValueData;
 	int BufferIndex_numberTextureOffsetData;
 };
 
@@ -42,7 +61,13 @@ struct Stack {
 	std::vector<CardReference> orderedCardReferences;
 };
 
+struct StoredStack {
+	float x, y;
+	std::vector<CardReference> storedCardReferences;
+};
+
 struct Game {
+	float gameTime;
 	bool rmbDown{ false}, lmbDown{ false };
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
 	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
@@ -53,15 +78,24 @@ struct Game {
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
 	std::vector<CardReference> handCards;
+	std::vector<StoredStack> storedStacks;
+	std::vector<Card> storedCards;
+
+	std::vector<Card> attackCards;
 
 	int handLimit;
 
 	std::vector<GLfloat> Buffer_cardsVertexOffsetData;
 	std::vector<GLfloat> Buffer_cardsTextureOffsetData;
+	std::vector<GLfloat> Buffer_cardsScaleValueData;
+	
 	std::vector<GLfloat> Buffer_numbersTextureOffsetData;
+	
 	std::vector<GLfloat> Buffer_candlesVertexOffsetData;
 	std::vector<GLfloat> Buffer_candlesTextureOffsetData;
 	std::vector<GLfloat> Buffer_candlesStateData;
+
+	std::vector<CardAnimation> cardScalingAnimations;
 
 	bool BufferRefreshFlag_cardsVertexOffsetData;
 	bool BufferRefreshFlag_cardsTextureOffsetData;
@@ -69,8 +103,9 @@ struct Game {
 	bool BufferRefreshFlag_candlesVertexOffsetData;
 	bool BufferRefreshFlag_candlesTextureOffsetData;
 	bool BufferRefreshFlag_candlesStateData;
+	bool BufferRefreshFlag_cardsScaleValueData;
 };
-//
+
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
@@ -91,6 +126,45 @@ void endTurn(Game* game);
 int countRemainingCandles(Game* game);
 CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, float y);
 bool markCardAsDeleted(Game* game, const CardReference& cardReference);
+void resolveCardScaleAnimations(Game* game);
+IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation);
+
+IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation) {
+	for (int i = 0; i < game->cardScalingAnimations.size(); i++) {
+		if (!validCardReference(game, game->cardScalingAnimations[i].cardReference) || game->cardScalingAnimations[i].animation.done) {
+			int currentGeneration = game->cardScalingAnimations[i].generation;
+			game->cardScalingAnimations[i] = cardScalingAnimation;
+			game->cardScalingAnimations[i].generation = currentGeneration + 1;
+			IndexReference ref;
+			ref.index = i;
+			return ref;
+		}
+	}
+
+	cardScalingAnimation.generation = 0;
+	int newIndex = game->cardScalingAnimations.size();
+	game->cardScalingAnimations.push_back(cardScalingAnimation);
+
+	IndexReference indexReference;
+	indexReference.generation = cardScalingAnimation.generation;
+	indexReference.index = newIndex;
+	
+	return indexReference;
+}
+
+void resolveCardScaleAnimations(Game* game) {
+	for (CardAnimation& cardAnimation : game->cardScalingAnimations) {
+		if (!cardAnimation.animation.done && validCardReference(game, cardAnimation.cardReference)) {
+			float currentAnimationValue = getCurrentAnimationValue(cardAnimation.animation, game->gameTime);
+			Card* card = getCardByCardReference(game, cardAnimation.cardReference);
+			game->Buffer_cardsScaleValueData[card->BufferIndex_cardScaleValueData] = currentAnimationValue;
+			game->BufferRefreshFlag_cardsScaleValueData = true;
+		}
+		else {
+			cardAnimation.animation.done = true;
+		}
+	}
+}
 
 bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 
@@ -140,9 +214,12 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 
 void endTurn(Game* game) {
 	int candlesRemaining = countRemainingCandles(game);
-	for (Stack& stack : game->stacks) {
-		if (stack.orderedCardReferences.size() == 1) {
+	for (int i = 0; i < game->stacks.size(); i++) {
+		if (game->stacks[i].orderedCardReferences.size() == 1) {
 			candlesRemaining = max(0, candlesRemaining - 1);
+		}
+		else {
+			
 		}
 	}
 
@@ -194,12 +271,13 @@ int countRemainingCandles(Game* game) {
 
 void init_game(Game *game) {
 	srand(time(NULL));
+	game->gameTime = 0.0f;
 	//table stacks
-	Stack stack1{ 800.0f, 900 };
-	Stack stack2{ 400.0f, 600.0f };
-	Stack stack3{ 600.0f, 200.0f };
-	Stack stack4{ 1000.0f, 200.0f };
-	Stack stack5{ 1200.0f, 600.0f };
+	Stack stack1{ 200.0f + 50, 550.0f };
+	Stack stack2{ 550.0f + 50, 550.0f };
+	Stack stack3{ 900.0f + 50, 550.0f };
+	Stack stack4{ 1250.0f + 50, 550.0f };
+	Stack stack5{ 1600.0f + 50, 550.0f };
 
 	game->handLimit = 5;
 
@@ -228,6 +306,9 @@ void init_game(Game *game) {
 }
 
 void tick(Game *game, float mouseX, float mouseY, float dt) {
+
+	game->gameTime += dt;
+	resolveCardScaleAnimations(game);
 
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
@@ -301,6 +382,18 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	}
 	
 	int pickedCardIndex = pickCard(game, game->mouseX, game->mouseY);
+	if (pickedCardIndex > -1 && !game->cards[pickedCardIndex].mouseIsHovering) {
+		game->cards[pickedCardIndex].mouseIsHovering = true;
+		FloatAnimation animation = createAnimation(1.0f, 1.5f, 10.0f, game->gameTime);
+		CardReference cardReference;
+		cardReference.cardIndex = pickedCardIndex;
+		cardReference.generation = game->cards[pickedCardIndex].generation;
+		CardAnimation cardAnimation;
+		cardAnimation.cardReference = cardReference;
+		cardAnimation.animation = animation;
+		queueCardScalingAnimation(game, cardAnimation);
+		//TODO: Cancel animation and reset scale value when mouse is not hovering
+	}
 	if (game->lmbDown && !validCardReference(game, game->grabbedCardReference) && pickedCardIndex > -1) {
 		CardReference cardReference;
 		cardReference.cardIndex = pickedCardIndex;
@@ -339,7 +432,7 @@ void resetCardsAtStackPositions(Game* game) {
 			if (!cardGrabbed) {
 				Card* card = getCardByCardReference(game, stack.orderedCardReferences[i]);
 				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = stack.x;
-				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = stack.y;
+				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = stack.y - (i * 10);
 				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = i * zIncrement;
 			}
 		}
@@ -418,7 +511,7 @@ void pruneStacksCardReferences(Game* game) {
 				it = stack.orderedCardReferences.erase(it);
 			}
 			else {
-				++it;
+				it++;
 			}
 		}
 	}
@@ -496,6 +589,9 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	game->Buffer_numbersTextureOffsetData.push_back(((GLfloat)number) * (GLfloat)0.1f);
 	game->Buffer_numbersTextureOffsetData.push_back((GLfloat)0.0f);
 
+	card.BufferIndex_cardScaleValueData = game->Buffer_cardsScaleValueData.size();
+	game->Buffer_cardsScaleValueData.push_back(1.0f);
+
 	int cardIndex = game->cards.size();
 	game->cards.push_back(card);
 
@@ -520,8 +616,8 @@ bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, fl
 void addCandles(Game* game) {
 	Candle candle1;
 	candle1.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(500.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(900);
+	game->Buffer_candlesVertexOffsetData.push_back(200.0f);
+	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle1.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
 	game->Buffer_candlesTextureOffsetData.push_back(1 * 64.0f);
@@ -531,8 +627,8 @@ void addCandles(Game* game) {
 
 	Candle candle2;
 	candle2.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(1000.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(900);
+	game->Buffer_candlesVertexOffsetData.push_back(550.0f);
+	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle2.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
 	game->Buffer_candlesTextureOffsetData.push_back(2 * 64.0f);
@@ -542,8 +638,8 @@ void addCandles(Game* game) {
 
 	Candle candle3;
 	candle3.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(300.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(300);
+	game->Buffer_candlesVertexOffsetData.push_back(900.0f);
+	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle3.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
 	game->Buffer_candlesTextureOffsetData.push_back(3 * 64.0f);
@@ -553,8 +649,8 @@ void addCandles(Game* game) {
 
 	Candle candle4;
 	candle4.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(1175.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(300);
+	game->Buffer_candlesVertexOffsetData.push_back(1250.0f);
+	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle4.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
 	game->Buffer_candlesTextureOffsetData.push_back(4 * 64.0f);
@@ -564,8 +660,8 @@ void addCandles(Game* game) {
 
 	Candle candle5;
 	candle5.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(750.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(150);
+	game->Buffer_candlesVertexOffsetData.push_back(1600.0f);
+	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle5.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
 	game->Buffer_candlesTextureOffsetData.push_back(5 * 64.0f);

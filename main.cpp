@@ -45,8 +45,6 @@ glm::mat4 proj;
 glm::mat4 model;
 glm::mat4 view;
 
-//Game game;
-
 bool initGL(Game *game) {
 
 	proj = glm::ortho(0.0f, 1600.0f, 0.0f, 1200.0f, 1.0f, 100.0f);
@@ -177,6 +175,27 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		GLfloat miniatureCardVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			0.25f, 0.0f, 0.0f,
+			0.25f, 0.5f, 0.0f,
+			0.0f, 0.5f, 0.0f,
+			//Texture Coordinates
+			0.0f, 0.25f,
+			0.125f, 0.25f,
+			0.125f, 0.0f,
+			0.0f, 0.0f
+		};
+
+		InstancedSpriteShaderAttribute_Float cardScaleAttrib;
+		cardScaleAttrib.id = 0;
+		cardScaleAttrib.name = "scaleValue";
+		cardScaleAttrib.dim = 1;
+		cardScaleAttrib.location = glGetAttribLocation(gProgramID, cardScaleAttrib.name);
+		cardScaleAttrib.instancedData = game->Buffer_cardsScaleValueData.data();
+		cardScaleAttrib.instancedDataSize = game->Buffer_cardsScaleValueData.size();
+
 		initInstancedSpriteMeshMaterial_2D(
 			gVertexPos2DLocation,
 			gTextureTranslationLocation,
@@ -185,7 +204,7 @@ bool initGL(Game *game) {
 			cardVertexData, 20,
 			game->Buffer_cardsTextureOffsetData.data(), game->Buffer_cardsTextureOffsetData.size(),
 			game->Buffer_cardsVertexOffsetData.data(), game->Buffer_cardsVertexOffsetData.size(),
-			std::vector<InstancedSpriteShaderAttribute_Float>(),
+			std::vector<InstancedSpriteShaderAttribute_Float> { cardScaleAttrib },
 			&cardMeshMaterial);
 
 		initInstancedSpriteMeshMaterial_2D(
@@ -358,7 +377,7 @@ int main( int argc, char* args[] )
 		}
 
 		Uint32 currentTicks = SDL_GetTicks();
-		if (SDL_TICKS_PASSED(currentTicks, ticks+16)) {
+		if (SDL_TICKS_PASSED(currentTicks, ticks+(1000.0f/100.0f))) {
 			Uint32 diff = currentTicks - ticks;
 			float dt = (float)diff / 16.0f;
 			ticks = currentTicks;
@@ -397,6 +416,15 @@ int main( int argc, char* args[] )
 			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesStateData.size() * sizeof(GLfloat), game.Buffer_candlesStateData.data(), GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			game.BufferRefreshFlag_candlesStateData = false;
+		}
+
+		if (game.BufferRefreshFlag_cardsScaleValueData) {
+			cardMeshMaterial.shaderAttributes[0].instancedData = game.Buffer_cardsScaleValueData.data();
+			cardMeshMaterial.shaderAttributes[0].instancedDataSize = game.Buffer_cardsScaleValueData.size();
+			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.shaderAttributes[0].bufferHandle);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsScaleValueData.size() * sizeof(GLfloat), game.Buffer_cardsScaleValueData.data(), GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_cardsScaleValueData = false;
 		}
 
 		render_fun(&game);
