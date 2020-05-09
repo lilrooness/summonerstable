@@ -7,6 +7,8 @@
 #include "game_structs.h"
 #include "card.h"
 
+//TODO: BUG - cant seem create more attacks than were created on the first turn
+
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
@@ -34,21 +36,22 @@ bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnim
 CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
 
 void addAttacks(Game *game);
-IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y);
-int createNewAttack(Game* game, int number, float x, float y);
+IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
+int createNewAttack(Game* game, int number, float x, float y, int stackIndex);
 
-IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y) {
+IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex) {
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (game->attacks[i].deleted) {
 			game->attacks[i].deleted = false;
 			game->attacks[i].generation++;
 			game->attacks[i].number = number;
+			game->attacks[i].stackIndex = stackIndex;
 			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
 			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = 0.0f;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 2] = 0.0f;
 
 			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = ATTACK_SPRITE_SIZE * (number - 1);
-			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = ATTACK_SPRITE_ROW;
+			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData + 1] = ATTACK_SPRITE_ROW;
 
 			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
 
@@ -60,7 +63,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y) {
 		}
 	}
 
-	int newAttackIndex = createNewAttack(game, number, x, y);
+	int newAttackIndex = createNewAttack(game, number, x, y, stackIndex);
 	IndexReference reference;
 	reference.index = newAttackIndex;
 	reference.generation = 0;
@@ -70,6 +73,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y) {
 
 void addAttacks(Game* game) {
 	int numberOfAttacks = (rand() % 4) + 1;
+	cout << numberOfAttacks << endl;
 	float startingPosition = 265.0f;
 	float gap = 350.0f;
 	std::vector<int> availablePositions{ 0,1,2,3,4 };
@@ -79,13 +83,15 @@ void addAttacks(Game* game) {
 		int position = availablePositions[positionIndex];
 		availablePositions.erase(availablePositions.begin() + positionIndex);
 		int attackValue = (rand() % 4) + 1;
-		createNewAttack(game, attackValue, startingPosition + gap * position, 1050.0f);
+		// here we uise the position as the stack index, as they represent the same thing?
+		reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1050.0f, position);
 	}
 }
 
-int createNewAttack(Game* game, int number, float x, float y) {
+int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	Attack attack;
 	attack.number = number;
+	attack.stackIndex = stackIndex;
 	attack.deleted = false;
 	attack.generation = 0;
 	attack.BufferIndex_attackTextureOffsetData = game->Buffer_attacksTextureOffsetData.size();
@@ -93,7 +99,7 @@ int createNewAttack(Game* game, int number, float x, float y) {
 	attack.BufferIndex_attackScaleValueData = game->Buffer_attacksScaleValueData.size();
 
 	game->Buffer_attacksTextureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
-	game->Buffer_attacksTextureOffsetData.push_back(7 * ATTACK_SPRITE_SIZE);
+	game->Buffer_attacksTextureOffsetData.push_back(ATTACK_SPRITE_ROW);
 	
 
 	game->Buffer_attacksVertexOffsetData.push_back(x);
@@ -186,13 +192,13 @@ bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 	return false;
 }
 
-IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y) {
+IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (game->attacks[i].deleted) {
 			game->attacks[i].deleted = false;
 			game->attacks[i].generation++;
 			game->attacks[i].number = number;
-			
+			game->attacks[i].stackIndex = stackIndex;
 			
 			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
 			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
@@ -211,7 +217,7 @@ IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y) 
 		}
 	}
 
-	int index = createNewAttack(game, number, x, y);
+	int index = createNewAttack(game, number, x, y, stackIndex);
 	IndexReference reference;
 	reference.index = index;
 	reference.generation = 0;
@@ -253,25 +259,20 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 }
 
 void endTurn(Game* game) {
-	int candlesRemaining = countRemainingCandles(game);
-	for (int i = 0; i < game->stacks.size(); i++) {
-		if (game->stacks[i].orderedCardReferences.size() == 1) {
-			candlesRemaining = max(0, candlesRemaining - 1);
+	for (int i = 0; i < game->attacks.size(); i++) {
+		if (game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
+			// do the thing where we put out the candle for the stack ...
+			game->Buffer_candlesStateData[game->attacks[i].stackIndex] = 0.0f;
+			game->BufferRefreshFlag_candlesStateData = true;
 		}
-		else {
-			
-		}
+		game->attacks[i].deleted = true;
+		game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = -300;
+		game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = -300;
 	}
-
-	for (int i = 0; i < game->Buffer_candlesStateData.size(); i++) {
-		if (candlesRemaining - i > 0) {
-			game->Buffer_candlesStateData[i] = 1;
-		}
-		else {
-			game->Buffer_candlesStateData[i] = 0;
-		}
-	}
-	game->BufferRefreshFlag_candlesStateData = true;
+	addAttacks(game);
+	game->BufferRefreshFlag_attacksTextureOffsetData = true;
+	game->BufferRefreshFlag_attacksVertexOffsetData = true;
+	
 
 	for (Stack& stack : game->stacks) {
 		for (const CardReference& cardReference : stack.orderedCardReferences) {
@@ -280,6 +281,7 @@ void endTurn(Game* game) {
 			}
 		}
 	}
+
 	pruneStacksCardReferences(game);
 
 	int cardsToDeal = 5;

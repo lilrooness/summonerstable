@@ -49,6 +49,7 @@ struct Attack {
 	int number;
 	bool deleted;
 	int generation;
+	int stackIndex;
 
 	int BufferIndex_attackTextureOffsetData;
 	int BufferIndex_attackVertexOffsetData;

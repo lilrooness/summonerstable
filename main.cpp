@@ -391,6 +391,20 @@ int main( int argc, char* args[] )
 			game.BufferRefreshFlag_cardsScaleValueData = false;
 		}
 
+		if (game.BufferRefreshFlag_attacksVertexOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.positionOffsetVBO_instanced);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_attacksVertexOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_attacksVertexOffsetData = false;
+		}
+
+		if (game.BufferRefreshFlag_attacksTextureOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.textureOffsetVBO_instanced);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_attacksTextureOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_attacksTextureOffsetData = false;
+		}
+
 		render_fun(&game);
 		SDL_GL_SwapWindow(window);
 	}
