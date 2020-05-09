@@ -35,6 +35,12 @@
     <ClInclude Include="animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="game_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="card.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.fs">

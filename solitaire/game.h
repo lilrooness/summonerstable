@@ -1,109 +1,11 @@
 #pragma once
 
 #include <vector>
-#include <GL/GLU.h>
 #include <time.h>
 #include <stdlib.h>
 #include <algorithm>
-#include "animation.h";
-
-//TODO: Split card tick update operation out into a seperate function and file
-//TODO: Check that these functions actually work:
-// - void pruneStacksCardReferences(Game* game);
-// - void pruneHandCardReferences(Game* game);
-
-enum Suit { EYE, BONE, FLESH, BLOOD, HAIR};
-
-enum CardAnimationType { SCALE };
-
-const float CARD_WIDTH = 0.25f * 512.0f;
-const float	CARD_HEIGHT = 0.5f * 512.0f;
-
-struct IndexReference {
-	int index;
-	int generation;
-};
-
-struct CardReference {
-	int cardIndex;
-	int generation;
-};
-
-struct CardAnimation {
-	FloatAnimation animation;
-	CardReference cardReference;
-	int generation;
-};
-
-struct Card {
-	int number;
-	Suit suit;
-	bool deleted;
-	int generation;
-	bool mouseIsHovering{false};
-	IndexReference hoverAnimationReference;
-
-	int BufferIndex_cardTextureOffsetData;
-	int BufferIndex_cardVertexOffsetData;
-	int BufferIndex_cardScaleValueData;
-	int BufferIndex_numberTextureOffsetData;
-};
-
-struct Candle {
-	int BufferIndex_candleVertexOffsetData;
-	int BufferIndex_candleTextureOffsetData;
-	int BufferIndex_candleStateData;
-};
-
-struct Stack {
-	float x, y;
-	std::vector<CardReference> orderedCardReferences;
-};
-
-struct StoredStack {
-	float x, y;
-	std::vector<CardReference> storedCardReferences;
-};
-
-struct Game {
-	float gameTime;
-	bool rmbDown{ false}, lmbDown{ false };
-	float mouseX{ 0.0f }, mouseY{ 0.0f };
-	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
-
-	bool turnEndedByPlayer = false;
-
-	CardReference grabbedCardReference;
-	std::vector<Card> cards;
-	std::vector<Stack> stacks;
-	std::vector<CardReference> handCards;
-	std::vector<StoredStack> storedStacks;
-	std::vector<Card> storedCards;
-
-	std::vector<Card> attackCards;
-
-	int handLimit;
-
-	std::vector<GLfloat> Buffer_cardsVertexOffsetData;
-	std::vector<GLfloat> Buffer_cardsTextureOffsetData;
-	std::vector<GLfloat> Buffer_cardsScaleValueData;
-	
-	std::vector<GLfloat> Buffer_numbersTextureOffsetData;
-	
-	std::vector<GLfloat> Buffer_candlesVertexOffsetData;
-	std::vector<GLfloat> Buffer_candlesTextureOffsetData;
-	std::vector<GLfloat> Buffer_candlesStateData;
-
-	std::vector<CardAnimation> cardScalingAnimations;
-
-	bool BufferRefreshFlag_cardsVertexOffsetData;
-	bool BufferRefreshFlag_cardsTextureOffsetData;
-	bool BufferRefreshFlag_numbersTextureOffsetData;
-	bool BufferRefreshFlag_candlesVertexOffsetData;
-	bool BufferRefreshFlag_candlesTextureOffsetData;
-	bool BufferRefreshFlag_candlesStateData;
-	bool BufferRefreshFlag_cardsScaleValueData;
-};
+#include "game_structs.h"
+#include "card.h"
 
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
@@ -130,6 +32,81 @@ IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAn
 void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference);
 bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
 CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
+
+void addAttacks(Game *game);
+IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y);
+int createNewAttack(Game* game, int number, float x, float y);
+
+IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y) {
+	for (int i = 0; i < game->attacks.size(); i++) {
+		if (game->attacks[i].deleted) {
+			game->attacks[i].deleted = false;
+			game->attacks[i].generation++;
+			game->attacks[i].number = number;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = 0.0f;
+
+			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = ATTACK_SPRITE_SIZE * (number - 1);
+			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = ATTACK_SPRITE_ROW;
+
+			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
+
+			IndexReference reference;
+			reference.generation = 0;
+			reference.index = i;
+
+			return reference;
+		}
+	}
+
+	int newAttackIndex = createNewAttack(game, number, x, y);
+	IndexReference reference;
+	reference.index = newAttackIndex;
+	reference.generation = 0;
+
+	return reference;
+}
+
+void addAttacks(Game* game) {
+	int numberOfAttacks = (rand() % 4) + 1;
+	float startingPosition = 265.0f;
+	float gap = 350.0f;
+	std::vector<int> availablePositions{ 0,1,2,3,4 };
+
+	for (int i = 0; i < numberOfAttacks; i++) {
+		int positionIndex = rand() % (availablePositions.size() - 1);
+		int position = availablePositions[positionIndex];
+		availablePositions.erase(availablePositions.begin() + positionIndex);
+		int attackValue = (rand() % 4) + 1;
+		createNewAttack(game, attackValue, startingPosition + gap * position, 1050.0f);
+	}
+}
+
+int createNewAttack(Game* game, int number, float x, float y) {
+	Attack attack;
+	attack.number = number;
+	attack.deleted = false;
+	attack.generation = 0;
+	attack.BufferIndex_attackTextureOffsetData = game->Buffer_attacksTextureOffsetData.size();
+	attack.BufferIndex_attackVertexOffsetData = game->Buffer_attacksVertexOffsetData.size();
+	attack.BufferIndex_attackScaleValueData = game->Buffer_attacksScaleValueData.size();
+
+	game->Buffer_attacksTextureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
+	game->Buffer_attacksTextureOffsetData.push_back(7 * ATTACK_SPRITE_SIZE);
+	
+
+	game->Buffer_attacksVertexOffsetData.push_back(x);
+	game->Buffer_attacksVertexOffsetData.push_back(y);
+	game->Buffer_attacksVertexOffsetData.push_back(0.0f);
+
+	game->Buffer_attacksScaleValueData.push_back(1.0f);
+
+	int attackIndex = game->attacks.size();
+	game->attacks.push_back(attack);
+
+	return attackIndex;
+}
 
 void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference) {
 	if (validScalingRefereceAnimation(game, scalingAnimationReference)) {
@@ -207,6 +184,39 @@ bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 	}
 
 	return false;
+}
+
+IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y) {
+	for (int i = 0; i < game->attacks.size(); i++) {
+		if (game->attacks[i].deleted) {
+			game->attacks[i].deleted = false;
+			game->attacks[i].generation++;
+			game->attacks[i].number = number;
+			
+			
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
+			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 2] = 0.0f;
+
+			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = (number - 1) * ATTACK_SPRITE_SIZE;
+			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
+		
+			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
+			
+			IndexReference reference;
+			reference.generation = game->attacks[i].generation;
+			reference.index = i;
+
+			return reference;
+		}
+	}
+
+	int index = createNewAttack(game, number, x, y);
+	IndexReference reference;
+	reference.index = index;
+	reference.generation = 0;
+
+	return reference;
 }
 
 CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, float y) {
@@ -326,6 +336,7 @@ void init_game(Game *game) {
 	}
 
 	addCandles(game);
+	addAttacks(game);
 
 	game->BufferRefreshFlag_cardsVertexOffsetData = false;
 	game->BufferRefreshFlag_cardsTextureOffsetData = false;

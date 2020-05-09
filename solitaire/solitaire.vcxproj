@@ -146,6 +146,8 @@
   <ItemGroup>
     <ClInclude Include="game.h" />
     <ClInclude Include="animation.h" />
+    <ClInclude Include="game_structs.h" />
+    <ClInclude Include="card.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="shader_reader.h" />
     <ClInclude Include="stb_image.h" />
