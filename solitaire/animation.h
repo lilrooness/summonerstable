@@ -33,15 +33,12 @@ FloatAnimation createAnimation(float from, float to, float durationTicks, float 
 float getCurrentAnimationValue(FloatAnimation& animation, float currentTime) {
 
 	if (currentTime - animation.started >= animation.durationTicks) {
-		std::cout << "animation done, returing: " << animation.to << endl;
 		animation.done = true;
 		return animation.to;
 	}
 
 
 	float t = (currentTime - animation.started) / animation.durationTicks;
-
-	std::cout << "playing animation: " << t << endl;
 
 
 	return animation.from + t * (animation.to - animation.from);

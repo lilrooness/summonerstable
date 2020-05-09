@@ -8,7 +8,6 @@
 #include "animation.h";
 
 //TODO: Split card tick update operation out into a seperate function and file
-//TODO: Cancel animation and reset scale value when mouse is not hovering
 //TODO: Check that these functions actually work:
 // - void pruneStacksCardReferences(Game* game);
 // - void pruneHandCardReferences(Game* game);
@@ -128,6 +127,36 @@ CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, f
 bool markCardAsDeleted(Game* game, const CardReference& cardReference);
 void resolveCardScaleAnimations(Game* game);
 IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation);
+void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference);
+bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
+CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
+
+void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference) {
+	if (validScalingRefereceAnimation(game, scalingAnimationReference)) {
+		CardAnimation* cardAnimation = getCardAnimationByIndexReference(game, scalingAnimationReference);
+		cardAnimation->animation.done = true;
+	}
+}
+
+CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference) {
+	if (validScalingRefereceAnimation(game, scalingAnimationReference)) {
+		return &game->cardScalingAnimations[scalingAnimationReference.index];
+	}
+
+	return nullptr;
+}
+
+bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference) {
+	if (scalingAnimationReference.index >= game->cardScalingAnimations.size()) {
+		return false;
+	}
+	
+	if (scalingAnimationReference.generation != game->cardScalingAnimations[scalingAnimationReference.index].generation) {
+		return false;
+	}
+	
+	return true;
+}
 
 IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation) {
 	for (int i = 0; i < game->cardScalingAnimations.size(); i++) {
@@ -137,6 +166,7 @@ IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAn
 			game->cardScalingAnimations[i].generation = currentGeneration + 1;
 			IndexReference ref;
 			ref.index = i;
+			ref.generation = game->cardScalingAnimations[i].generation;
 			return ref;
 		}
 	}
@@ -380,20 +410,31 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		game->grabbedCardReference.cardIndex = -1;
 		game->grabbedCardReference.generation = -1;
 	}
-	
+
 	int pickedCardIndex = pickCard(game, game->mouseX, game->mouseY);
+
+	for (int i = 0; i < game->cards.size(); i++) {
+		if (game->cards[i].mouseIsHovering && i != pickedCardIndex) {
+			game->cards[i].mouseIsHovering = false;
+			cancelCardScalingAnimation(game, game->cards[i].hoverAnimationReference);
+			game->Buffer_cardsScaleValueData[game->cards[i].BufferIndex_cardScaleValueData] = 1.0f;
+			game->BufferRefreshFlag_cardsScaleValueData = true;
+		}
+	}
+	
 	if (pickedCardIndex > -1 && !game->cards[pickedCardIndex].mouseIsHovering) {
 		game->cards[pickedCardIndex].mouseIsHovering = true;
-		FloatAnimation animation = createAnimation(1.0f, 1.5f, 10.0f, game->gameTime);
+		FloatAnimation animation = createAnimation(1.0f, 1.1f, 5.0f, game->gameTime);
 		CardReference cardReference;
 		cardReference.cardIndex = pickedCardIndex;
 		cardReference.generation = game->cards[pickedCardIndex].generation;
 		CardAnimation cardAnimation;
 		cardAnimation.cardReference = cardReference;
 		cardAnimation.animation = animation;
-		queueCardScalingAnimation(game, cardAnimation);
-		//TODO: Cancel animation and reset scale value when mouse is not hovering
+		IndexReference animationReference = queueCardScalingAnimation(game, cardAnimation);
+		game->cards[pickedCardIndex].hoverAnimationReference = animationReference;
 	}
+
 	if (game->lmbDown && !validCardReference(game, game->grabbedCardReference) && pickedCardIndex > -1) {
 		CardReference cardReference;
 		cardReference.cardIndex = pickedCardIndex;
