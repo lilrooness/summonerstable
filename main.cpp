@@ -1,9 +1,11 @@
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
+//#include <SDL_mixer.h>
 #include <GL/GLU.h>
 #include <stdio.h>
 #include <string>
+#include "solitaire/sound.h"
 #include "solitaire/shader_reader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -233,7 +235,7 @@ void render_fun(Game *game) {
 
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(attackMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksTextureOffsetData.size() / 2);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
 	
 	glUseProgram(gCandelProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -254,7 +256,7 @@ void render_fun(Game *game) {
 int main( int argc, char* args[] )
 {
 	Game game;
-	init_game(&game);
+	
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -265,7 +267,7 @@ int main( int argc, char* args[] )
 	SDL_GLContext gcontext;
 
 	//Initialize SDL
-	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0 )
 	{
 		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 	}
@@ -301,14 +303,25 @@ int main( int argc, char* args[] )
 					printf("Warning unable to set Vsync! SDL Error: %s\n", SDL_GetError());
 				}
 
+				//Initialize SDL_mixer
+				if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+				{
+					printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+				}
+
+				init_game(&game);
+
 				//Initialise OpenGL
 				if (!initGL(&game)) {
 					printf("unable to initialise opengl");
 					return 1;
 				}
+
 			}
 		}
 	}
+
+
 
 	bool quit = false;
 
@@ -403,6 +416,13 @@ int main( int argc, char* args[] )
 			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_attacksTextureOffsetData.data(), GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			game.BufferRefreshFlag_attacksTextureOffsetData = false;
+		}
+
+		if (game.BufferRefreshFlag_attacksScaleValueData) {
+			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.shaderAttributes[0].bufferHandle);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksScaleValueData.size() * sizeof(GLfloat), game.Buffer_attacksScaleValueData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_attacksScaleValueData = false;
 		}
 
 		render_fun(&game);

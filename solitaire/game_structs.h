@@ -3,6 +3,7 @@
 #include <vector>
 #include <GL/GLU.h>
 #include "animation.h"
+#include "sound.h"
 
 float ATTACK_SPRITE_SIZE = 0.03125f;
 float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
@@ -73,6 +74,7 @@ struct StoredStack {
 };
 
 struct Game {
+	int turn;
 	float gameTime;
 	bool rmbDown{ false }, lmbDown{ false };
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
@@ -114,5 +116,7 @@ struct Game {
 	bool BufferRefreshFlag_cardsScaleValueData;
 	bool BufferRefreshFlag_attacksVertexOffsetData;
 	bool BufferRefreshFlag_attacksTextureOffsetData;
+	bool BufferRefreshFlag_attacksScaleValueData;
 	
+	SoundState soundState;
 };

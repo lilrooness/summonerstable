@@ -71,8 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\jfran\sdl2\glew-2.1.0-win32\glew-2.1.0\include;C:\Users\jfran\sdl2\SDL2-devel-2.0.12-VC\SDL2-2.0.12\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\jfran\sdl2\glew-2.1.0-win32\glew-2.1.0\lib\Release\Win32;C:\Users\jfran\sdl2\SDL2-devel-2.0.12-VC\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\jfran\sdl2\glew-2.1.0-win32\glew-2.1.0\include;C:\Users\jfran\sdl2\SDL2-devel-2.0.12-VC\SDL2-2.0.12\include;C:\Users\jfran\sdl2\SDL2_mixer-devel-2.0.4-VC\SDL2_mixer-2.0.4\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\jfran\sdl2\SDL2_mixer-devel-2.0.4-VC\SDL2_mixer-2.0.4\lib\x86;C:\Users\jfran\sdl2\glew-2.1.0-win32\glew-2.1.0\lib\Release\Win32;C:\Users\jfran\sdl2\SDL2-devel-2.0.12-VC\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -93,7 +93,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -148,6 +148,7 @@
     <ClInclude Include="animation.h" />
     <ClInclude Include="game_structs.h" />
     <ClInclude Include="card.h" />
+    <ClInclude Include="sound.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="shader_reader.h" />
     <ClInclude Include="stb_image.h" />

@@ -7,8 +7,6 @@
 #include "game_structs.h"
 #include "card.h"
 
-//TODO: BUG - cant seem create more attacks than were created on the first turn
-
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
 bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
@@ -56,7 +54,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
 
 			IndexReference reference;
-			reference.generation = 0;
+			reference.generation = game->attacks[i].generation;
 			reference.index = i;
 
 			return reference;
@@ -73,7 +71,6 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 
 void addAttacks(Game* game) {
 	int numberOfAttacks = (rand() % 4) + 1;
-	cout << numberOfAttacks << endl;
 	float startingPosition = 265.0f;
 	float gap = 350.0f;
 	std::vector<int> availablePositions{ 0,1,2,3,4 };
@@ -101,7 +98,6 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	game->Buffer_attacksTextureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
 	game->Buffer_attacksTextureOffsetData.push_back(ATTACK_SPRITE_ROW);
 	
-
 	game->Buffer_attacksVertexOffsetData.push_back(x);
 	game->Buffer_attacksVertexOffsetData.push_back(y);
 	game->Buffer_attacksVertexOffsetData.push_back(0.0f);
@@ -272,6 +268,7 @@ void endTurn(Game* game) {
 	addAttacks(game);
 	game->BufferRefreshFlag_attacksTextureOffsetData = true;
 	game->BufferRefreshFlag_attacksVertexOffsetData = true;
+	game->BufferRefreshFlag_attacksScaleValueData = true;
 	
 
 	for (Stack& stack : game->stacks) {
@@ -298,6 +295,15 @@ void endTurn(Game* game) {
 	game->BufferRefreshFlag_cardsVertexOffsetData = true;
 
 	game->turnEndedByPlayer = false;
+	game->turn++;
+
+	int track;
+	if (game->turn % 2 == 0) {
+		track = 1;
+	} else  {
+		track = 0;
+	}
+	playMusic(&game->soundState, track);
 }
 
 int countRemainingCandles(Game* game) {
@@ -312,6 +318,8 @@ int countRemainingCandles(Game* game) {
 }
 
 void init_game(Game *game) {
+	initSound(&game->soundState);
+	game->turn = 1;
 	srand(time(NULL));
 	game->gameTime = 0.0f;
 	//table stacks
@@ -346,6 +354,8 @@ void init_game(Game *game) {
 	game->BufferRefreshFlag_candlesVertexOffsetData = false;
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesStateData = false;
+
+	playMusic(&game->soundState, 0);
 }
 
 void tick(Game *game, float mouseX, float mouseY, float dt) {
