@@ -367,7 +367,7 @@ int main( int argc, char* args[] )
 		Uint32 currentTicks = SDL_GetTicks();
 		if (SDL_TICKS_PASSED(currentTicks, ticks+(1000.0f/100.0f))) {
 			Uint32 diff = currentTicks - ticks;
-			float dt = (float)diff / 16.0f;
+			float dt = (float)diff / /*16.0f*/ (1000.0f / 100.0f);
 			ticks = currentTicks;
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
 		}

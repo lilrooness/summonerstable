@@ -256,7 +256,7 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 
 void endTurn(Game* game) {
 	for (int i = 0; i < game->attacks.size(); i++) {
-		if (game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
+		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
 			// do the thing where we put out the candle for the stack ...
 			game->Buffer_candlesStateData[game->attacks[i].stackIndex] = 0.0f;
 			game->BufferRefreshFlag_candlesStateData = true;
@@ -504,8 +504,7 @@ void resetCardsAtStackPositions(Game* game) {
 
 	game->BufferRefreshFlag_cardsVertexOffsetData = true;
 }
-
-
+ 
 int pickCard(Game *game, float mouseX, float mouseY) {
 	std::vector<int> collidedCardIndexes;
 	for (int i = 0; i < game->cards.size(); i++) {
