@@ -1,12 +1,12 @@
 #pragma once
-#include <GL/glew.h>
-#include <SDL_opengl.h>
-#include <GL/GLU.h>
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
+
+#include <GL/glew.h>
+#include <GL/GLU.h>
 
 using namespace std;
 

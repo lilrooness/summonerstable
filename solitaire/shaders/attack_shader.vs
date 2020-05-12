@@ -1,10 +1,12 @@
 #version 330 core
 
-in vec3 APos;
-in vec2 ATexCoord;
-in vec2 AUVOffset;
-in vec3 LVertexPos2D;
-in float scaleValue;
+layout (location = 7) in vec3 APos;
+layout (location = 8) in vec2 AUVOffset;
+
+layout (location = 3) in vec3 LVertexPos2D;
+layout (location = 4) in vec2 ATexCoord;
+layout (location = 5) in float tintValue;
+layout (location = 6) in float scaleValue;
 
 uniform mat4 model;
 uniform mat4 view;

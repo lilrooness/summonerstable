@@ -32,10 +32,29 @@ IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAn
 void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference);
 bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
 CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
+void initCircle(Game* game);
 
 void addAttacks(Game *game);
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
 int createNewAttack(Game* game, int number, float x, float y, int stackIndex);
+
+void initCircle(Game* game) {
+	GLfloat size = 300.0f;
+	GLfloat textureOffsetX = 0.0f;
+
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 3; x++) {
+			game->Buffer_circleVertexOffsetData.push_back((GLfloat)x * size);//x
+			game->Buffer_circleVertexOffsetData.push_back(((GLfloat)(3.0f-y)  * size));//y
+			game->Buffer_circleVertexOffsetData.push_back((GLfloat)-1.0f);//z
+
+			game->Buffer_circleTextureOffsetData.push_back((GLfloat)x * SUMMON_CIRCLE_SPRITE_SIZE);//x
+			game->Buffer_circleTextureOffsetData.push_back((GLfloat)y * SUMMON_CIRCLE_SPRITE_SIZE + SUMMON_CIRCLE_ROW);//y
+			game->Buffer_circleScaleValueData.push_back((GLfloat)1.0f);
+			game->Buffer_circleTintValueData.push_back((GLfloat)1.0f);
+		}
+	}
+}
 
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex) {
 	for (int i = 0; i < game->attacks.size(); i++) {
@@ -52,6 +71,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData + 1] = ATTACK_SPRITE_ROW;
 
 			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
+			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData] = 1.0f;
 
 			IndexReference reference;
 			reference.generation = game->attacks[i].generation;
@@ -94,6 +114,7 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	attack.BufferIndex_attackTextureOffsetData = game->Buffer_attacksTextureOffsetData.size();
 	attack.BufferIndex_attackVertexOffsetData = game->Buffer_attacksVertexOffsetData.size();
 	attack.BufferIndex_attackScaleValueData = game->Buffer_attacksScaleValueData.size();
+	attack.BufferIndex_attackTintValueData = game->Buffer_attacksTintValueData.size();
 
 	game->Buffer_attacksTextureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
 	game->Buffer_attacksTextureOffsetData.push_back(ATTACK_SPRITE_ROW);
@@ -103,6 +124,7 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	game->Buffer_attacksVertexOffsetData.push_back(0.0f);
 
 	game->Buffer_attacksScaleValueData.push_back(1.0f);
+	game->Buffer_attacksTintValueData.push_back(1.0f);
 
 	int attackIndex = game->attacks.size();
 	game->attacks.push_back(attack);
@@ -231,13 +253,10 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 
 			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData] = 0.0f;
 			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 1] = 0.0f;
-			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 2] = 0.0f;
+			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 2] = 1.0f;
 
 			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData] = (GLfloat)suit * (GLfloat)0.125f;
 			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData + 1] = (GLfloat)0.0f;
-
-			game->Buffer_numbersTextureOffsetData[game->cards[i].BufferIndex_numberTextureOffsetData] = (GLfloat)number * (GLfloat)0.1f;
-			game->Buffer_numbersTextureOffsetData[game->cards[i].BufferIndex_numberTextureOffsetData + 1] = (GLfloat)0.0f;
 
 			CardReference reference;
 			reference.cardIndex = i;
@@ -281,7 +300,7 @@ void endTurn(Game* game) {
 
 	pruneStacksCardReferences(game);
 
-	int cardsToDeal = 5;
+	int cardsToDeal = 4;
 
 	for (int i = 0; i < cardsToDeal; i++) {
 		Suit cardSuit = static_cast<Suit>(rand() % 5);
@@ -327,7 +346,6 @@ void init_game(Game *game) {
 	Stack stack2{ 550.0f + 50, 550.0f };
 	Stack stack3{ 900.0f + 50, 550.0f };
 	Stack stack4{ 1250.0f + 50, 550.0f };
-	Stack stack5{ 1600.0f + 50, 550.0f };
 
 	game->handLimit = 5;
 
@@ -335,7 +353,6 @@ void init_game(Game *game) {
 	game->stacks.push_back(stack2);
 	game->stacks.push_back(stack3);
 	game->stacks.push_back(stack4);
-	game->stacks.push_back(stack5);
 
 	game->grabbedCardReference = CardReference{ -1, -1 };
 
@@ -347,6 +364,7 @@ void init_game(Game *game) {
 
 	addCandles(game);
 	addAttacks(game);
+	initCircle(game);
 
 	game->BufferRefreshFlag_cardsVertexOffsetData = false;
 	game->BufferRefreshFlag_cardsTextureOffsetData = false;
@@ -394,6 +412,10 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		Card *grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
 		GLfloat grabbedX = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData];
 		GLfloat grabbedY = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData + 1];
+		
+		//reset card Z position
+		Card* card = getCardByCardReference(game, game->grabbedCardReference);
+		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = 1.0f;
 
 		//attempt to put the card in the hand
 		if (grabbedY < 50.0f) {
@@ -463,6 +485,10 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		cardReference.cardIndex = pickedCardIndex;
 		cardReference.generation = game->cards[pickedCardIndex].generation;
 		game->grabbedCardReference = cardReference;
+
+		//raise card Z posision
+		Card* card = getCardByCardReference(game, cardReference);
+		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = 2.0f;
 	}
 
 	pruneStacksCardReferences(game);
@@ -497,7 +523,7 @@ void resetCardsAtStackPositions(Game* game) {
 				Card* card = getCardByCardReference(game, stack.orderedCardReferences[i]);
 				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = stack.x;
 				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = stack.y - (i * 10);
-				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = i * zIncrement;
+				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = (i+1) * zIncrement;
 			}
 		}
 	}
@@ -629,11 +655,10 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	card.number = number;
 	card.suit = suit;
 	card.BufferIndex_cardVertexOffsetData = game->Buffer_cardsVertexOffsetData.size();
-	GLfloat x, y, z{ 0.0f };
+	GLfloat x, y, z{ 1.0f };
 	if (stackIndex > -1) {
 		x = game->stacks[stackIndex].x;
 		y = game->stacks[stackIndex].y;
-		
 	}
 	else {
 		x = 0.0f;
@@ -647,10 +672,6 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	card.BufferIndex_cardTextureOffsetData = game->Buffer_cardsTextureOffsetData.size();
 	game->Buffer_cardsTextureOffsetData.push_back(((GLfloat)suit) * (GLfloat)0.125f);
 	game->Buffer_cardsTextureOffsetData.push_back((GLfloat)0.0f);
-
-	card.BufferIndex_numberTextureOffsetData = game->Buffer_numbersTextureOffsetData.size();
-	game->Buffer_numbersTextureOffsetData.push_back(((GLfloat)number) * (GLfloat)0.1f);
-	game->Buffer_numbersTextureOffsetData.push_back((GLfloat)0.0f);
 
 	card.BufferIndex_cardScaleValueData = game->Buffer_cardsScaleValueData.size();
 	game->Buffer_cardsScaleValueData.push_back(1.0f);
@@ -721,14 +742,4 @@ void addCandles(Game* game) {
 	candle4.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
 
-	Candle candle5;
-	candle5.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
-	game->Buffer_candlesVertexOffsetData.push_back(1600.0f);
-	game->Buffer_candlesVertexOffsetData.push_back(800);
-	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
-	candle5.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
-	game->Buffer_candlesTextureOffsetData.push_back(5 * 64.0f);
-	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
-	candle5.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
-	game->Buffer_candlesStateData.push_back(1.0f);
 }

@@ -16,7 +16,8 @@
 #include "solitaire/glm/gtc/type_ptr.hpp"
 
 #include "solitaire/game.h"
-#include "solitaire/material.h";
+#include "solitaire/material.h"
+#include "solitaire/sprite_material.h"
 
 //Screen dimensions
 int SCREEN_WIDTH;
@@ -25,6 +26,7 @@ int SCREEN_HEIGHT;
 //Graphics program
 GLuint gProgramID = 0;
 GLuint gCandelProgramID = 0;
+GLuint spriteShaderProgramID = 0;
 
 GLint gVertexPos2DLocation = -1;
 GLint gTextureUVLocation = -1;
@@ -32,8 +34,11 @@ GLint gVertexTranslationLocation = -1;
 GLint gTextureTranslationLocation = -1;
 
 GLint gModelLocation = -1;
+const GLint MODEL_LOCATION = 0;
 GLint gViewLocation = -1;
+const GLint VIEW_LOCATION = 1;
 GLint gProjectionLocation = -1;
+const GLint PROJECTION_LOCATION = 2;
 
 unsigned int cardTexture;
 unsigned int candelTexture;
@@ -41,6 +46,10 @@ unsigned int candelTexture;
 InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
 InstancedSpriteMeshMaterial2D attackMeshMaterial;
+//InstancedSpriteMeshMaterial2D circleMeshMaterial;
+
+SpriteMaterial attackSpriteMaterial;
+SpriteMaterial summonCircleSpriteMaterial;
 
 glm::mat4 proj;
 glm::mat4 model;
@@ -48,7 +57,7 @@ glm::mat4 view;
 
 bool initGL(Game *game) {
 
-	proj = glm::ortho(0.0f, 1600.0f, 0.0f, 1200.0f, 1.0f, 100.0f);
+	proj = glm::ortho(0.0f, 1800.0f, 0.0f, 1400.0f, 1.0f, 100.0f);
 	model = glm::mat4(1.0);
 	view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -50.0f));
@@ -95,6 +104,7 @@ bool initGL(Game *game) {
 
 	gProgramID = create_shader_program("shaders/shader.vs", "shaders/shader.fs");
 	gCandelProgramID = create_shader_program("shaders/candel_shader.vs", "shaders/candel_shader.fs");
+	spriteShaderProgramID = create_shader_program("shaders/attack_shader.vs", "shaders/attack_shader.fs");
 
 	gModelLocation = glGetUniformLocation(gProgramID, "model");
 	gViewLocation = glGetUniformLocation(gProgramID, "view");
@@ -144,6 +154,20 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		//0.0625f = 1/64
+		GLfloat summonCircleVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			//Texture Coordinates
+			0.0f, 0.0625f,
+			0.0625f, 0.0625f,
+			0.0625f, 0.0f,
+			0.0f, 0.0f
+		};
+
 		//0.03125f = 1/32
 		GLfloat AttacksVertexData[] = {
 			//Vertex Coordinates
@@ -158,23 +182,19 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
-		InstancedSpriteShaderAttribute_Float attackScaleAttrib;
-		attackScaleAttrib.id = 0;
-		attackScaleAttrib.name = "scaleValue";
-		attackScaleAttrib.dim = 1;
-		attackScaleAttrib.location = glGetAttribLocation(gProgramID, attackScaleAttrib.name);
-		attackScaleAttrib.instancedData = game->Buffer_attacksScaleValueData.data();
-		attackScaleAttrib.instancedDataSize = game->Buffer_attacksScaleValueData.size();
+		initSpriteMaterial(summonCircleVertexData, 20,
+			game->Buffer_circleTintValueData,
+			game->Buffer_circleScaleValueData,
+			game->Buffer_circleVertexOffsetData,
+			game->Buffer_circleTextureOffsetData,
+			&summonCircleSpriteMaterial);
 
-		initInstancedSpriteMeshMaterial_2D(gVertexPos2DLocation,
-			gTextureTranslationLocation,
-			gTextureUVLocation,
-			gVertexTranslationLocation,
-			AttacksVertexData, 20,
-			game->Buffer_attacksTextureOffsetData.data(), game->Buffer_attacksTextureOffsetData.size(),
-			game->Buffer_attacksVertexOffsetData.data(), game->Buffer_attacksVertexOffsetData.size(),
-			std::vector < InstancedSpriteShaderAttribute_Float> { attackScaleAttrib },
-			&attackMeshMaterial);
+		initSpriteMaterial(AttacksVertexData, 20, 
+			std::vector<GLfloat>(),
+			game->Buffer_attacksScaleValueData,
+			game->Buffer_attacksVertexOffsetData,
+			game->Buffer_attacksTextureOffsetData,
+			&attackSpriteMaterial);
 
 		InstancedSpriteShaderAttribute_Float cardScaleAttrib;
 		cardScaleAttrib.id = 0;
@@ -218,23 +238,21 @@ bool initGL(Game *game) {
 }
 
 void render_fun(Game *game) {
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(gProgramID);
-	
+	glUseProgram(spriteShaderProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
-
-	glBindTexture(GL_TEXTURE_2D, cardTexture);
-	glBindVertexArray(cardMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_cardsVertexOffsetData.size() /3);
-
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
-	glBindVertexArray(attackMeshMaterial.vao);
+
+	glBindVertexArray(summonCircleSpriteMaterial.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_circleVertexOffsetData.size() / 3);
+
+	glBindVertexArray(attackSpriteMaterial.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
 	
 	glUseProgram(gCandelProgramID);
@@ -245,9 +263,19 @@ void render_fun(Game *game) {
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
+
+	glUseProgram(gProgramID);
+
+	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
+
+	glBindTexture(GL_TEXTURE_2D, cardTexture);
+	glBindVertexArray(cardMeshMaterial.vao);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_cardsVertexOffsetData.size() / 3);
 	
-	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 	glBindVertexArray(0);
 	glUseProgram(NULL);
 }
@@ -273,10 +301,11 @@ int main( int argc, char* args[] )
 	}
 	else
 	{
-		//Use OpenGL 3.1 core
+		//Use OpenGL 3.3 core
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
 		//Create window
 		window = SDL_CreateWindow( "Summoners Tower", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960/*NULL, NULL*/, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/);
@@ -405,23 +434,17 @@ int main( int argc, char* args[] )
 		}
 
 		if (game.BufferRefreshFlag_attacksVertexOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.positionOffsetVBO_instanced);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_attacksVertexOffsetData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_vertexOffsetData, game.Buffer_attacksVertexOffsetData, GL_STATIC_DRAW);
 			game.BufferRefreshFlag_attacksVertexOffsetData = false;
 		}
 
 		if (game.BufferRefreshFlag_attacksTextureOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.textureOffsetVBO_instanced);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_attacksTextureOffsetData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_textureOffsetData, game.Buffer_attacksTextureOffsetData, GL_STATIC_DRAW);
 			game.BufferRefreshFlag_attacksTextureOffsetData = false;
 		}
 
 		if (game.BufferRefreshFlag_attacksScaleValueData) {
-			glBindBuffer(GL_ARRAY_BUFFER, attackMeshMaterial.shaderAttributes[0].bufferHandle);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_attacksScaleValueData.size() * sizeof(GLfloat), game.Buffer_attacksScaleValueData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_scaleData, game.Buffer_attacksScaleValueData, GL_STATIC_DRAW);
 			game.BufferRefreshFlag_attacksScaleValueData = false;
 		}
 

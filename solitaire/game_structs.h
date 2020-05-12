@@ -9,6 +9,9 @@ float ATTACK_SPRITE_SIZE = 0.03125f;
 float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
 float CANDLE_SPRITE_SIZE = 0.0625f;
 
+float SUMMON_CIRCLE_SPRITE_SIZE = 0.0625f;
+float SUMMON_CIRCLE_ROW = 0.0625f * 7.0f;
+
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR };
 
 enum CardAnimationType { SCALE };
@@ -55,6 +58,7 @@ struct Attack {
 	int BufferIndex_attackTextureOffsetData;
 	int BufferIndex_attackVertexOffsetData;
 	int BufferIndex_attackScaleValueData;
+	int BufferIndex_attackTintValueData;
 };
 
 struct Candle {
@@ -96,12 +100,16 @@ struct Game {
 	std::vector<GLfloat> Buffer_attacksVertexOffsetData;
 	std::vector<GLfloat> Buffer_attacksTextureOffsetData;
 	std::vector<GLfloat> Buffer_attacksScaleValueData;
-
-	std::vector<GLfloat> Buffer_numbersTextureOffsetData;
+	std::vector<GLfloat> Buffer_attacksTintValueData;
 
 	std::vector<GLfloat> Buffer_candlesVertexOffsetData;
 	std::vector<GLfloat> Buffer_candlesTextureOffsetData;
 	std::vector<GLfloat> Buffer_candlesStateData;
+
+	std::vector<GLfloat> Buffer_circleVertexOffsetData;
+	std::vector<GLfloat> Buffer_circleTextureOffsetData;
+	std::vector<GLfloat> Buffer_circleTintValueData;
+	std::vector<GLfloat> Buffer_circleScaleValueData;
 
 	std::vector<CardAnimation> cardScalingAnimations;
 
@@ -117,6 +125,9 @@ struct Game {
 	bool BufferRefreshFlag_attacksVertexOffsetData;
 	bool BufferRefreshFlag_attacksTextureOffsetData;
 	bool BufferRefreshFlag_attacksScaleValueData;
+	bool BufferRefreshFlag_circleStateData;
+	bool BufferRefreshFlag_circleVertexOffsetData;
+	bool BufferRefreshFlag_circleTextureOffsetData;
 	
 	SoundState soundState;
 };

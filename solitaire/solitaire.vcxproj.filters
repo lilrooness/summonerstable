@@ -44,6 +44,9 @@
     <ClInclude Include="sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sprite_material.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.fs">
@@ -56,6 +59,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="shaders\candel_shader.vs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\attack_shader.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\attack_shader.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

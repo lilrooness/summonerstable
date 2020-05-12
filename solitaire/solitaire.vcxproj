@@ -151,9 +151,12 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="shader_reader.h" />
+    <ClInclude Include="sprite_material.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\attack_shader.fs" />
+    <None Include="shaders\attack_shader.vs" />
     <None Include="shaders\candel_shader.fs" />
     <None Include="shaders\candel_shader.vs" />
     <None Include="shaders\shader.fs" />

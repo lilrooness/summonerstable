@@ -1,4 +1,5 @@
-#version 140
+#version 330 core
+
 
 in vec3 APos;
 in vec2 ATexCoord;
