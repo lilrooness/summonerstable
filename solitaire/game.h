@@ -285,7 +285,7 @@ void endTurn(Game* game) {
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
 			// do the thing where we decrease the stack's candle size...
-			game->candles[game->attacks[i].stackIndex].burnLevel++;
+			game->candles[game->attacks[i].stackIndex].burnLevel += game->attacks[i].number - game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size();
 			offsetCandleTexturesToMatchBurnLevels(game);
 		}
 		game->attacks[i].deleted = true;
