@@ -145,12 +145,12 @@ bool initGL(Game *game) {
 			//Vertex Coordinates
 			0.0f, 0.0f, 0.0f,
 			1.0f, 0.0f, 0.0f,
-			1.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
+			1.0f, 2.0f, 0.0f,
+			0.0f, 2.0f, 0.0f,
 			//Texture Coordinates
-			0.0f, 0.0625f,
-			0.0625f, 0.0625f,
-			0.0625f, 0.0f,
+			0.0f, NEW_CANDLE_SPRITE_HEIGHT,
+			NEW_CANDLE_SPRITE_WIDTH, NEW_CANDLE_SPRITE_HEIGHT,
+			NEW_CANDLE_SPRITE_WIDTH, 0.0f,
 			0.0f, 0.0f
 		};
 
@@ -422,6 +422,13 @@ int main( int argc, char* args[] )
 			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesStateData.size() * sizeof(GLfloat), game.Buffer_candlesStateData.data(), GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			game.BufferRefreshFlag_candlesStateData = false;
+		}
+
+		if (game.BufferRefreshFlag_candlesTextureOffsetData) {
+			glBindBuffer(GL_ARRAY_BUFFER, candelsMeshMaterial.textureOffsetVBO_instanced);
+			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_candlesTextureOffsetData.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			game.BufferRefreshFlag_candlesTextureOffsetData = false;
 		}
 
 		if (game.BufferRefreshFlag_cardsScaleValueData) {

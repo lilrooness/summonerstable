@@ -44,7 +44,7 @@ void initCircle(Game* game) {
 
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
-			game->Buffer_circleVertexOffsetData.push_back((GLfloat)x * size);//x
+			game->Buffer_circleVertexOffsetData.push_back((GLfloat)x * size + 425);//x
 			game->Buffer_circleVertexOffsetData.push_back(((GLfloat)(3.0f-y)  * size));//y
 			game->Buffer_circleVertexOffsetData.push_back((GLfloat)-1.0f);//z
 
@@ -101,7 +101,7 @@ void addAttacks(Game* game) {
 		availablePositions.erase(availablePositions.begin() + positionIndex);
 		int attackValue = (rand() % 4) + 1;
 		// here we uise the position as the stack index, as they represent the same thing?
-		reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1050.0f, position);
+		reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1250.0f, position);
 	}
 }
 
@@ -273,12 +273,20 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 	reference.cardIndex = cardIndex;
 }
 
+void offsetCandleTexturesToMatchBurnLevels(Game* game) {
+	for (const Candle& candle : game->candles) {
+		game->Buffer_candlesTextureOffsetData[candle.BufferIndex_candleTextureOffsetData] = NEW_CANDLE_SPRITE_WIDTH * candle.burnLevel;
+	}
+
+	game->BufferRefreshFlag_candlesTextureOffsetData = true;
+}
+
 void endTurn(Game* game) {
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
-			// do the thing where we put out the candle for the stack ...
-			game->Buffer_candlesStateData[game->attacks[i].stackIndex] = 0.0f;
-			game->BufferRefreshFlag_candlesStateData = true;
+			// do the thing where we decrease the stack's candle size...
+			game->candles[game->attacks[i].stackIndex].burnLevel++;
+			offsetCandleTexturesToMatchBurnLevels(game);
 		}
 		game->attacks[i].deleted = true;
 		game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = -300;
@@ -699,47 +707,56 @@ bool boxCollision(float x1, float y1, float w1, float h1, float x2, float y2, fl
 
 void addCandles(Game* game) {
 	Candle candle1;
+	candle1.burnLevel = 0;
 	candle1.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
 	game->Buffer_candlesVertexOffsetData.push_back(200.0f);
 	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle1.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
-	game->Buffer_candlesTextureOffsetData.push_back(1 * 64.0f);
 	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
+	game->Buffer_candlesTextureOffsetData.push_back(NEW_CANDLE_SPRITE_ROW);
 	candle1.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
 
 	Candle candle2;
+	candle2.burnLevel = 0;
 	candle2.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
 	game->Buffer_candlesVertexOffsetData.push_back(550.0f);
 	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle2.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
-	game->Buffer_candlesTextureOffsetData.push_back(2 * 64.0f);
 	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
+	game->Buffer_candlesTextureOffsetData.push_back(NEW_CANDLE_SPRITE_ROW);
 	candle2.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
 
 	Candle candle3;
+	candle3.burnLevel = 0;
 	candle3.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
 	game->Buffer_candlesVertexOffsetData.push_back(900.0f);
 	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle3.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
-	game->Buffer_candlesTextureOffsetData.push_back(3 * 64.0f);
 	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
+	game->Buffer_candlesTextureOffsetData.push_back(NEW_CANDLE_SPRITE_ROW);
 	candle3.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
 
 	Candle candle4;
+	candle4.burnLevel = 0;
 	candle4.BufferIndex_candleVertexOffsetData = game->Buffer_candlesVertexOffsetData.size();
 	game->Buffer_candlesVertexOffsetData.push_back(1250.0f);
 	game->Buffer_candlesVertexOffsetData.push_back(800);
 	game->Buffer_candlesVertexOffsetData.push_back(0.0f);
 	candle4.BufferIndex_candleTextureOffsetData = game->Buffer_candlesTextureOffsetData.size();
-	game->Buffer_candlesTextureOffsetData.push_back(4 * 64.0f);
 	game->Buffer_candlesTextureOffsetData.push_back(0.0f);
+	game->Buffer_candlesTextureOffsetData.push_back(NEW_CANDLE_SPRITE_ROW);
 	candle4.BufferIndex_candleStateData = game->Buffer_candlesStateData.size();
 	game->Buffer_candlesStateData.push_back(1.0f);
+
+	game->candles.push_back(candle1);
+	game->candles.push_back(candle2);
+	game->candles.push_back(candle3);
+	game->candles.push_back(candle4);
 
 }

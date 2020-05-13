@@ -5,12 +5,15 @@
 #include "animation.h"
 #include "sound.h"
 
-float ATTACK_SPRITE_SIZE = 0.03125f;
-float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
-float CANDLE_SPRITE_SIZE = 0.0625f;
+const float NEW_CANDLE_SPRITE_ROW = 1.0f/16.0f * 10.0f;
+const float NEW_CANDLE_SPRITE_HEIGHT = 2.0f * (1.0f / 16.0f);
+const float NEW_CANDLE_SPRITE_WIDTH = 1.0f * (1.0f / 16.0f);
 
-float SUMMON_CIRCLE_SPRITE_SIZE = 0.0625f;
-float SUMMON_CIRCLE_ROW = 0.0625f * 7.0f;
+const float ATTACK_SPRITE_SIZE = 0.03125f;
+const float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
+
+const float SUMMON_CIRCLE_SPRITE_SIZE = 0.0625f;
+const float SUMMON_CIRCLE_ROW = 0.0625f * 7.0f;
 
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR };
 
@@ -65,6 +68,8 @@ struct Candle {
 	int BufferIndex_candleVertexOffsetData;
 	int BufferIndex_candleTextureOffsetData;
 	int BufferIndex_candleStateData;
+
+	int burnLevel;
 };
 
 struct Stack {
@@ -90,6 +95,7 @@ struct Game {
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
 	std::vector<CardReference> handCards;
+	std::vector <Candle> candles;
 
 	int handLimit;
 
