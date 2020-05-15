@@ -75,6 +75,8 @@ struct Spell {
 	int BufferIndex_spellTintValueData;
 
 	std::vector<Suit> requirements;
+
+	bool mouseHovering = false;
 };
 
 struct Candle {

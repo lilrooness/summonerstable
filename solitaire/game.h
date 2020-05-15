@@ -45,7 +45,7 @@ void initSpells(Game* game) {
 	summonDeamon.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
 	summonDeamon.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
 
-	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsScaleValueData.push_back(0.5f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(0.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
@@ -69,7 +69,7 @@ void initSpells(Game* game) {
 	scribeFlesh.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
 	scribeFlesh.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
 
-	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsScaleValueData.push_back(0.5f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(1.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
@@ -91,7 +91,7 @@ void initSpells(Game* game) {
 	meltBone.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
 	meltBone.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
 
-	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsScaleValueData.push_back(0.5f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(2.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
