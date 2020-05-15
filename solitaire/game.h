@@ -33,10 +33,80 @@ void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimati
 bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
 CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
 void initCircle(Game* game);
-
 void addAttacks(Game *game);
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
 int createNewAttack(Game* game, int number, float x, float y, int stackIndex);
+void initSpells(Game *game);
+
+void initSpells(Game* game) {
+	Spell summonDeamon;
+	summonDeamon.BufferIndex_spellScaleValueData = game->Buffer_spellsScaleValueData.size();
+	summonDeamon.BufferIndex_spellTintValueData = game->Buffer_spellsTintValueData.size();
+	summonDeamon.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
+	summonDeamon.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
+
+	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTextureOffsetData.push_back(0.0f);
+	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
+	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(900.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(-1.0f);
+
+	summonDeamon.requirements = std::vector<Suit>{
+		Suit::BLOOD,
+		Suit::BONE,
+		Suit::FLESH,
+		Suit::HAIR,
+		Suit::EYE,
+	};
+
+	game->spells.push_back(summonDeamon);
+
+	Spell scribeFlesh;
+	scribeFlesh.BufferIndex_spellScaleValueData = game->Buffer_spellsScaleValueData.size();
+	scribeFlesh.BufferIndex_spellTintValueData = game->Buffer_spellsTintValueData.size();
+	scribeFlesh.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
+	scribeFlesh.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
+
+	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTextureOffsetData.push_back(1.0f * SPELL_SPRITE_WIDTH);
+	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
+	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(600.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(-1.0f);
+
+	scribeFlesh.requirements = std::vector<Suit>{
+		Suit::FLESH,
+		Suit::FLESH,
+		Suit::FLESH
+	};
+
+	game->spells.push_back(scribeFlesh);
+
+	Spell meltBone;
+	meltBone.BufferIndex_spellScaleValueData = game->Buffer_spellsScaleValueData.size();
+	meltBone.BufferIndex_spellTintValueData = game->Buffer_spellsTintValueData.size();
+	meltBone.BufferIndex_spellTextureOffsetData = game->Buffer_spellsTextureOffsetData.size();
+	meltBone.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
+
+	game->Buffer_spellsScaleValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTextureOffsetData.push_back(2.0f * SPELL_SPRITE_WIDTH);
+	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
+	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(300.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(-1.0f);
+
+	meltBone.requirements = std::vector<Suit>{
+		Suit::BONE,
+		Suit::BONE,
+		Suit::BONE
+	};
+
+	game->spells.push_back(meltBone);
+}
 
 void initCircle(Game* game) {
 	GLfloat size = 300.0f;
@@ -374,6 +444,7 @@ void init_game(Game *game) {
 	addCandles(game);
 	addAttacks(game);
 	initCircle(game);
+	initSpells(game);
 
 	game->BufferRefreshFlag_cardsVertexOffsetData = false;
 	game->BufferRefreshFlag_cardsTextureOffsetData = false;

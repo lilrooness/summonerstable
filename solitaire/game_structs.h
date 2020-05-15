@@ -9,6 +9,10 @@ const float NEW_CANDLE_SPRITE_ROW = 1.0f/16.0f * 10.0f;
 const float NEW_CANDLE_SPRITE_HEIGHT = 2.0f * (1.0f / 16.0f);
 const float NEW_CANDLE_SPRITE_WIDTH = 1.0f * (1.0f / 16.0f);
 
+const float SPELL_SPRITE_ROW = 1.0f / 16.0f * 6;
+const float SPELL_SPRITE_HEIGHT = 1.0f / 16.0f;
+const float SPELL_SPRITE_WIDTH = 1.0f / 16.0f;
+
 const float ATTACK_SPRITE_SIZE = 0.03125f;
 const float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
 
@@ -64,6 +68,15 @@ struct Attack {
 	int BufferIndex_attackTintValueData;
 };
 
+struct Spell {
+	int BufferIndex_spellVertexOffsetData;
+	int BufferIndex_spellTextureOffsetData;
+	int BufferIndex_spellScaleValueData;
+	int BufferIndex_spellTintValueData;
+
+	std::vector<Suit> requirements;
+};
+
 struct Candle {
 	int BufferIndex_candleVertexOffsetData;
 	int BufferIndex_candleTextureOffsetData;
@@ -96,6 +109,7 @@ struct Game {
 	std::vector<Stack> stacks;
 	std::vector<CardReference> handCards;
 	std::vector <Candle> candles;
+	std::vector <Spell> spells;
 
 	int handLimit;
 
@@ -120,6 +134,7 @@ struct Game {
 	std::vector<GLfloat> Buffer_spellsVertexOffsetData;
 	std::vector<GLfloat> Buffer_spellsScaleValueData;
 	std::vector<GLfloat> Buffer_spellsTextureOffsetData;
+	std::vector<GLfloat> Buffer_spellsTintValueData;
 
 	std::vector<CardAnimation> cardScalingAnimations;
 
@@ -127,17 +142,27 @@ struct Game {
 
 	bool BufferRefreshFlag_cardsVertexOffsetData;
 	bool BufferRefreshFlag_cardsTextureOffsetData;
+	
 	bool BufferRefreshFlag_numbersTextureOffsetData;
+	
 	bool BufferRefreshFlag_candlesVertexOffsetData;
 	bool BufferRefreshFlag_candlesTextureOffsetData;
 	bool BufferRefreshFlag_candlesStateData;
 	bool BufferRefreshFlag_cardsScaleValueData;
+	
 	bool BufferRefreshFlag_attacksVertexOffsetData;
 	bool BufferRefreshFlag_attacksTextureOffsetData;
 	bool BufferRefreshFlag_attacksScaleValueData;
+	
 	bool BufferRefreshFlag_circleStateData;
 	bool BufferRefreshFlag_circleVertexOffsetData;
 	bool BufferRefreshFlag_circleTextureOffsetData;
+
+	bool BufferRefreshFlag_spellsVertexOffsetData;
+	bool BufferRefreshFlag_spellsTextureOffsetData;
+	bool BufferRefreshFlag_spellsScaleValueData;
+	bool BufferRefreshFlag_spellsTintValueData;
+
 	
 	SoundState soundState;
 };

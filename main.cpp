@@ -211,7 +211,7 @@ bool initGL(Game *game) {
 			&attackSpriteMaterial);
 
 		initSpriteMaterial(spellsVertexData, 20,
-			std::vector<GLfloat>(), // tint data
+			game->Buffer_spellsTintValueData,
 			game->Buffer_spellsScaleValueData,
 			game->Buffer_spellsVertexOffsetData,
 			game->Buffer_spellsTextureOffsetData,
@@ -276,6 +276,9 @@ void render_fun(Game *game) {
 	glBindVertexArray(attackSpriteMaterial.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
 	
+	glBindVertexArray(spellsSpriteMaterial.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_spellsTextureOffsetData.size() / 2);
+
 	glUseProgram(gCandelProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
