@@ -320,6 +320,7 @@ void endTurn(Game* game) {
 	game->BufferRefreshFlag_cardsTextureOffsetData = true;
 	game->BufferRefreshFlag_numbersTextureOffsetData = true;
 	game->BufferRefreshFlag_cardsVertexOffsetData = true;
+	game->BufferRefreshFlag_cardsScaleValueData = true;
 
 	game->turnEndedByPlayer = false;
 	game->turn++;
@@ -426,7 +427,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = 1.0f;
 
 		//attempt to put the card in the hand
-		if (grabbedY < 50.0f) {
+		if (grabbedY < 300.0f) {
 			if (game->handCards.size() < game->handLimit) {
 				int originalStackIndex = getCardStackIndex(game, game->grabbedCardReference);
 

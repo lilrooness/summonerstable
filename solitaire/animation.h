@@ -37,7 +37,6 @@ float getCurrentAnimationValue(FloatAnimation& animation, float currentTime) {
 		return animation.to;
 	}
 
-
 	float t = (currentTime - animation.started) / animation.durationTicks;
 
 

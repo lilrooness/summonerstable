@@ -1,5 +1,7 @@
 #pragma once
 
+//TODO: Make use of Mix_FadeInMusic / Mix_FadeOutMusic / Mix_HookMusicFinished to smooth out music switches
+
 #include <vector>
 #include <SDL_mixer.h>
 #include <iostream>
@@ -34,6 +36,7 @@ bool initSound(SoundState *soundState) {
 
 void playMusic(SoundState* soundState, int trackNumber) {
 	soundState->playing = trackNumber;
+	
 	Mix_PlayMusic(soundState->musicTracks[trackNumber], -1);
 }
 

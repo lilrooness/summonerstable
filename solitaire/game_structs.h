@@ -117,6 +117,10 @@ struct Game {
 	std::vector<GLfloat> Buffer_circleTintValueData;
 	std::vector<GLfloat> Buffer_circleScaleValueData;
 
+	std::vector<GLfloat> Buffer_spellsVertexOffsetData;
+	std::vector<GLfloat> Buffer_spellsScaleValueData;
+	std::vector<GLfloat> Buffer_spellsTextureOffsetData;
+
 	std::vector<CardAnimation> cardScalingAnimations;
 
 	std::vector<Attack> attacks;

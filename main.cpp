@@ -46,10 +46,10 @@ unsigned int candelTexture;
 InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
 InstancedSpriteMeshMaterial2D attackMeshMaterial;
-//InstancedSpriteMeshMaterial2D circleMeshMaterial;
 
 SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
+SpriteMaterial spellsSpriteMaterial;
 
 glm::mat4 proj;
 glm::mat4 model;
@@ -168,6 +168,20 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		//0.0625f = 1/64
+		GLfloat spellsVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			//Texture Coordinates
+			0.0f, 0.0625f,
+			0.0625f, 0.0625f,
+			0.0625f, 0.0f,
+			0.0f, 0.0f
+		};
+
 		//0.03125f = 1/32
 		GLfloat AttacksVertexData[] = {
 			//Vertex Coordinates
@@ -190,11 +204,18 @@ bool initGL(Game *game) {
 			&summonCircleSpriteMaterial);
 
 		initSpriteMaterial(AttacksVertexData, 20, 
-			std::vector<GLfloat>(),
+			std::vector<GLfloat>(), // tint data
 			game->Buffer_attacksScaleValueData,
 			game->Buffer_attacksVertexOffsetData,
 			game->Buffer_attacksTextureOffsetData,
 			&attackSpriteMaterial);
+
+		initSpriteMaterial(spellsVertexData, 20,
+			std::vector<GLfloat>(), // tint data
+			game->Buffer_spellsScaleValueData,
+			game->Buffer_spellsVertexOffsetData,
+			game->Buffer_spellsTextureOffsetData,
+			&spellsSpriteMaterial);
 
 		InstancedSpriteShaderAttribute_Float cardScaleAttrib;
 		cardScaleAttrib.id = 0;
