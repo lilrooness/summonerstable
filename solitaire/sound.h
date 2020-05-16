@@ -36,7 +36,6 @@ bool initSound(SoundState *soundState) {
 
 void playMusic(SoundState* soundState, int trackNumber) {
 	soundState->playing = trackNumber;
-	
 	Mix_PlayMusic(soundState->musicTracks[trackNumber], -1);
 }
 

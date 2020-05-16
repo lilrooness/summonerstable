@@ -5,6 +5,8 @@
 #include "animation.h"
 #include "sound.h"
 
+const float DEFUALT_MODEL_SCALE = 256.0f;
+
 const float NEW_CANDLE_SPRITE_ROW = 1.0f/16.0f * 10.0f;
 const float NEW_CANDLE_SPRITE_HEIGHT = 2.0f * (1.0f / 16.0f);
 const float NEW_CANDLE_SPRITE_WIDTH = 1.0f * (1.0f / 16.0f);
@@ -35,16 +37,8 @@ struct Attack;
 struct Candle;
 struct Stack;
 struct StoredStack;
-
-struct Spell {
-	int BufferIndex_spellVertexOffsetData;
-	int BufferIndex_spellTextureOffsetData;
-	int BufferIndex_spellScaleValueData;
-	int BufferIndex_spellTintValueData;
-	std::vector<Suit> requirements;
-	void (*castSpell)(Game* game);
-	bool mouseHovering = false;
-};
+struct IndexReference;
+struct CardReference;
 
 struct IndexReference {
 	int index;
@@ -61,6 +55,24 @@ struct CardAnimation {
 	CardReference cardReference;
 	int generation;
 };
+
+struct SpellAnimation {
+	FloatAnimation animation;
+	int spellIndex;
+	int generation;
+};
+
+struct Spell {
+	int BufferIndex_spellVertexOffsetData;
+	int BufferIndex_spellTextureOffsetData;
+	int BufferIndex_spellScaleValueData;
+	int BufferIndex_spellTintValueData;
+	std::vector<Suit> requirements;
+	void (*castSpell)(Game* game);
+	bool mouseHovering = false;
+	IndexReference hoverAnimationReference;
+};
+
 
 struct Card {
 	int number;
@@ -108,6 +120,7 @@ struct StoredStack {
 
 struct Game {
 	int turn;
+	int summonLevel = 0;
 	float gameTime;
 	bool rmbDown{ false }, lmbDown{ false };
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
@@ -148,6 +161,7 @@ struct Game {
 	std::vector<GLfloat> Buffer_spellsTintValueData;
 
 	std::vector<CardAnimation> cardScalingAnimations;
+	std::vector<SpellAnimation> spellScalingAnimations;
 
 	std::vector<Attack> attacks;
 
@@ -168,6 +182,7 @@ struct Game {
 	bool BufferRefreshFlag_circleStateData;
 	bool BufferRefreshFlag_circleVertexOffsetData;
 	bool BufferRefreshFlag_circleTextureOffsetData;
+	bool BufferRefreshFlag_circleTintValueData;
 
 	bool BufferRefreshFlag_spellsVertexOffsetData;
 	bool BufferRefreshFlag_spellsTextureOffsetData;

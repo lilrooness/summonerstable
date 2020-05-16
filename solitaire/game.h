@@ -79,7 +79,7 @@ void initSpells(Game* game) {
 	game->Buffer_spellsTextureOffsetData.push_back(1.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
 	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
-	game->Buffer_spellsVertexOffsetData.push_back(600.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(760.0f);
 	game->Buffer_spellsVertexOffsetData.push_back(-1.0f);
 
 	scribeFlesh.requirements = std::vector<Suit>{
@@ -103,7 +103,7 @@ void initSpells(Game* game) {
 	game->Buffer_spellsTextureOffsetData.push_back(2.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
 	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
-	game->Buffer_spellsVertexOffsetData.push_back(300.0f);
+	game->Buffer_spellsVertexOffsetData.push_back(620.0f);
 	game->Buffer_spellsVertexOffsetData.push_back(-1.0f);
 
 	meltBone.requirements = std::vector<Suit>{
@@ -365,6 +365,7 @@ void offsetCandleTexturesToMatchBurnLevels(Game* game) {
 }
 
 void endTurn(Game* game) {
+	summonDemon(game);
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
 			// do the thing where we decrease the stack's candle size...
@@ -472,6 +473,7 @@ void init_game(Game *game) {
 void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 	game->gameTime += dt;
+	tickSpells(game);
 	resolveCardScaleAnimations(game);
 
 	game->lastMouseX = game->mouseX;

@@ -51,6 +51,7 @@ SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
 SpriteMaterial spellsSpriteMaterial;
 
+
 glm::mat4 proj;
 glm::mat4 model;
 glm::mat4 view;
@@ -61,7 +62,7 @@ bool initGL(Game *game) {
 	model = glm::mat4(1.0);
 	view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -50.0f));
-	model = glm::scale(model, glm::vec3(256.0f, 256.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(DEFUALT_MODEL_SCALE, DEFUALT_MODEL_SCALE, 1.0f));
 	bool success = true;
 
 	glGenTextures(1, &candelTexture);
@@ -357,7 +358,7 @@ int main( int argc, char* args[] )
 				}
 
 				//Initialize SDL_mixer
-				if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+				if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096*2) < 0)
 				{
 					printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 				}
@@ -477,6 +478,16 @@ int main( int argc, char* args[] )
 		if (game.BufferRefreshFlag_attacksScaleValueData) {
 			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_scaleData, game.Buffer_attacksScaleValueData, GL_STATIC_DRAW);
 			game.BufferRefreshFlag_attacksScaleValueData = false;
+		}
+
+		if (game.BufferRefreshFlag_circleTintValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, summonCircleSpriteMaterial.BufferHandleInstanced_tintData, game.Buffer_circleTintValueData, GL_STATIC_DRAW);
+			game.BufferRefreshFlag_circleTintValueData = false;
+		}
+
+		if (game.BufferRefreshFlag_spellsScaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, spellsSpriteMaterial.BufferHandleInstanced_scaleData, game.Buffer_spellsScaleValueData, GL_STATIC_DRAW);
+			game.BufferRefreshFlag_spellsTintValueData = false;
 		}
 
 		render_fun(&game);
