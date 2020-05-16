@@ -104,7 +104,7 @@ bool initGL(Game *game) {
 
 	gProgramID = create_shader_program("shaders/shader.vs", "shaders/shader.fs");
 	gCandelProgramID = create_shader_program("shaders/candel_shader.vs", "shaders/candel_shader.fs");
-	spriteShaderProgramID = create_shader_program("shaders/attack_shader.vs", "shaders/attack_shader.fs");
+	spriteShaderProgramID = create_shader_program("shaders/sprite_shader.vs", "shaders/sprite_shader.fs");
 
 	gModelLocation = glGetUniformLocation(gProgramID, "model");
 	gViewLocation = glGetUniformLocation(gProgramID, "view");

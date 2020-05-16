@@ -64,10 +64,10 @@
     <None Include="shaders\candel_shader.vs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shaders\attack_shader.fs">
+    <None Include="shaders\sprite_shader.fs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shaders\attack_shader.vs">
+    <None Include="shaders\sprite_shader.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
