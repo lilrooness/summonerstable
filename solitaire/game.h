@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "game_structs.h"
 #include "card.h"
+#include "spells.h"
 
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
@@ -47,6 +48,8 @@ void initSpells(Game* game) {
 
 	game->Buffer_spellsScaleValueData.push_back(0.5f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(0.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
 	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
@@ -71,6 +74,8 @@ void initSpells(Game* game) {
 
 	game->Buffer_spellsScaleValueData.push_back(0.5f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(1.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
 	game->Buffer_spellsVertexOffsetData.push_back(5.0f);
@@ -92,6 +97,8 @@ void initSpells(Game* game) {
 	meltBone.BufferIndex_spellVertexOffsetData = game->Buffer_spellsVertexOffsetData.size();
 
 	game->Buffer_spellsScaleValueData.push_back(0.5f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
+	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTintValueData.push_back(1.0f);
 	game->Buffer_spellsTextureOffsetData.push_back(2.0f * SPELL_SPRITE_WIDTH);
 	game->Buffer_spellsTextureOffsetData.push_back(SPELL_SPRITE_ROW);
@@ -122,6 +129,8 @@ void initCircle(Game* game) {
 			game->Buffer_circleTextureOffsetData.push_back((GLfloat)y * SUMMON_CIRCLE_SPRITE_SIZE + SUMMON_CIRCLE_ROW);//y
 			game->Buffer_circleScaleValueData.push_back((GLfloat)1.0f);
 			game->Buffer_circleTintValueData.push_back((GLfloat)1.0f);
+			game->Buffer_circleTintValueData.push_back((GLfloat)1.0f);
+			game->Buffer_circleTintValueData.push_back((GLfloat)1.0f);
 		}
 	}
 }
@@ -142,6 +151,8 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 
 			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
 			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData] = 1.0f;
+			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData + 1] = 1.0f;
+			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData + 2] = 1.0f;
 
 			IndexReference reference;
 			reference.generation = game->attacks[i].generation;
@@ -194,6 +205,8 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	game->Buffer_attacksVertexOffsetData.push_back(0.0f);
 
 	game->Buffer_attacksScaleValueData.push_back(1.0f);
+	game->Buffer_attacksTintValueData.push_back(1.0f);
+	game->Buffer_attacksTintValueData.push_back(1.0f);
 	game->Buffer_attacksTintValueData.push_back(1.0f);
 
 	int attackIndex = game->attacks.size();

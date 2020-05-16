@@ -26,6 +26,26 @@ enum CardAnimationType { SCALE };
 const float CARD_WIDTH = 0.25f * 512.0f;
 const float	CARD_HEIGHT = 0.5f * 512.0f;
 
+struct Spell;
+struct Game;
+struct IndexReference;
+struct CardReference;
+struct Card;
+struct Attack;
+struct Candle;
+struct Stack;
+struct StoredStack;
+
+struct Spell {
+	int BufferIndex_spellVertexOffsetData;
+	int BufferIndex_spellTextureOffsetData;
+	int BufferIndex_spellScaleValueData;
+	int BufferIndex_spellTintValueData;
+	std::vector<Suit> requirements;
+	void (*castSpell)(Game* game);
+	bool mouseHovering = false;
+};
+
 struct IndexReference {
 	int index;
 	int generation;
@@ -66,17 +86,6 @@ struct Attack {
 	int BufferIndex_attackVertexOffsetData;
 	int BufferIndex_attackScaleValueData;
 	int BufferIndex_attackTintValueData;
-};
-
-struct Spell {
-	int BufferIndex_spellVertexOffsetData;
-	int BufferIndex_spellTextureOffsetData;
-	int BufferIndex_spellScaleValueData;
-	int BufferIndex_spellTintValueData;
-
-	std::vector<Suit> requirements;
-
-	bool mouseHovering = false;
 };
 
 struct Candle {

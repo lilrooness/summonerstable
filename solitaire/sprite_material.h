@@ -83,8 +83,10 @@ GLenum initSpriteMaterial(
 	glGenBuffers(1, &spriteMaterial_out->BufferHandleInstanced_tintData);
 	glBindBuffer(GL_ARRAY_BUFFER, spriteMaterial_out->BufferHandleInstanced_tintData);
 	glBufferData(GL_ARRAY_BUFFER, instancedTintData.size() * sizeof(GLfloat), instancedTintData.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(TINT_ATTRIB_LOCATION, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat), NULL);
+	glVertexAttribPointer(TINT_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+	glEnableVertexAttribArray(TINT_ATTRIB_LOCATION);
 	glVertexAttribDivisor(TINT_ATTRIB_LOCATION, 1);
+
 
 	//INDEX DATA
 	GLuint quadIndexData[] = { 0, 1, 2, 0, 2, 3 };

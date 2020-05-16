@@ -151,6 +151,7 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="shader_reader.h" />
+    <ClInclude Include="spells.h" />
     <ClInclude Include="sprite_material.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

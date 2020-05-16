@@ -203,8 +203,8 @@ bool initGL(Game *game) {
 			game->Buffer_circleTextureOffsetData,
 			&summonCircleSpriteMaterial);
 
-		initSpriteMaterial(AttacksVertexData, 20, 
-			std::vector<GLfloat>(), // tint data
+		initSpriteMaterial(AttacksVertexData, 20,
+			game->Buffer_attacksTintValueData,
 			game->Buffer_attacksScaleValueData,
 			game->Buffer_attacksVertexOffsetData,
 			game->Buffer_attacksTextureOffsetData,
