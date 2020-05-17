@@ -28,7 +28,7 @@ void endTurn(Game* game);
 int countRemainingCandles(Game* game);
 CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, float y);
 bool markCardAsDeleted(Game* game, const CardReference& cardReference);
-void resolveCardScaleAnimations(Game* game);
+//void resolveCardScaleAnimations(Game* game);
 IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation);
 void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference);
 bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
@@ -266,27 +266,27 @@ IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAn
 	return indexReference;
 }
 
-void resolveCardScaleAnimations(Game* game) {
-	for (CardAnimation& cardAnimation : game->cardScalingAnimations) {
-		if (!cardAnimation.animation.done && validCardReference(game, cardAnimation.cardReference)) {
-			float currentAnimationValue = getCurrentAnimationValue(cardAnimation.animation, game->gameTime);
-			Card* card = getCardByCardReference(game, cardAnimation.cardReference);
-			game->Buffer_cardsScaleValueData[card->BufferIndex_cardScaleValueData] = currentAnimationValue;
-			game->BufferRefreshFlag_cardsScaleValueData = true;
-		}
-		else {
-			cardAnimation.animation.done = true;
-		}
-	}
-}
+//void resolveCardScaleAnimations(Game* game) {
+//	for (CardAnimation& cardAnimation : game->cardScalingAnimations) {
+//		if (!cardAnimation.animation.done && validCardReference(game, cardAnimation.cardReference)) {
+//			float currentAnimationValue = getCurrentAnimationValue(cardAnimation.animation, game->gameTime);
+//			Card* card = getCardByCardReference(game, cardAnimation.cardReference);
+//			game->Buffer_cardsScaleValueData[card->BufferIndex_cardScaleValueData] = currentAnimationValue;
+//			game->BufferRefreshFlag_cardsScaleValueData = true;
+//		}
+//		else {
+//			cardAnimation.animation.done = true;
+//		}
+//	}
+//}
 
 bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 
 	if (validCardReference(game, cardReference)) {
 		Card *card = getCardByCardReference(game, cardReference);
 		card->deleted = true;
-		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = -300;
-		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = -300;
+		game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData] = -300;
+		game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 1] = -300;
 		return true;
 	}
 
@@ -334,12 +334,18 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 			game->cards[i].suit = suit;
 			game->cards[i].number = number;
 
-			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData] = 0.0f;
-			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 1] = 0.0f;
-			game->Buffer_cardsVertexOffsetData[game->cards[i].BufferIndex_cardVertexOffsetData + 2] = 1.0f;
+			game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[i].sprite.BufferIndex_vertexOffsetData] = 0.0f;
+			game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[i].sprite.BufferIndex_vertexOffsetData + 1] = 0.0f;
+			game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[i].sprite.BufferIndex_vertexOffsetData + 2] = 1.0f;
 
-			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData] = (GLfloat)suit * (GLfloat)0.125f;
-			game->Buffer_cardsTextureOffsetData[game->cards[i].BufferIndex_cardTextureOffsetData + 1] = (GLfloat)0.0f;
+			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData] = (GLfloat)suit * (GLfloat)0.125f;
+			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData + 1] = (GLfloat)0.0f;
+
+			game->cardSpriteClass.Buffer_scaleValueData[game->cards[i].sprite.BufferIndex_scaleValueData] = (GLfloat)1.0f;
+
+			game->cardSpriteClass.Buffer_tintValueData[game->cards[i].sprite.BufferIndex_tintValueData] = (GLfloat)1.0f;
+			game->cardSpriteClass.Buffer_tintValueData[game->cards[i].sprite.BufferIndex_tintValueData + 1] = (GLfloat)1.0f;
+			game->cardSpriteClass.Buffer_tintValueData[game->cards[i].sprite.BufferIndex_tintValueData + 2] = (GLfloat)1.0f;
 
 			CardReference reference;
 			reference.cardIndex = i;
@@ -401,10 +407,10 @@ void endTurn(Game* game) {
 		game->stacks[i].orderedCardReferences.push_back(cardReference);
 	}
 
-	game->BufferRefreshFlag_cardsTextureOffsetData = true;
-	game->BufferRefreshFlag_numbersTextureOffsetData = true;
-	game->BufferRefreshFlag_cardsVertexOffsetData = true;
-	game->BufferRefreshFlag_cardsScaleValueData = true;
+	//game->BufferRefreshFlag_numbersTextureOffsetData = true;
+	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = true;
+	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
+	game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
 
 	game->turnEndedByPlayer = false;
 	game->turn++;
@@ -462,8 +468,9 @@ void init_game(Game *game) {
 	initCircle(game);
 	initSpells(game);
 
-	game->BufferRefreshFlag_cardsVertexOffsetData = false;
-	game->BufferRefreshFlag_cardsTextureOffsetData = false;
+	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
+	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = false;
+
 	game->BufferRefreshFlag_numbersTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesVertexOffsetData = false;
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
@@ -476,15 +483,18 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 	game->gameTime += dt;
 	tickSpells(game);
-	resolveCardScaleAnimations(game);
+	//resolveCardScaleAnimations(game);
 
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
 	game->mouseX = mouseX;
 	game->mouseY = mouseY;
 
-	game->BufferRefreshFlag_cardsVertexOffsetData = false;
-	game->BufferRefreshFlag_cardsTextureOffsetData = false;
+
+	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
+	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = false;
+	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
+	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = false;
 	game->BufferRefreshFlag_numbersTextureOffsetData = false;
 	game->BufferRefreshFlag_candlesVertexOffsetData = false;
 	game->BufferRefreshFlag_candlesTextureOffsetData = false;
@@ -499,20 +509,20 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		GLfloat yDiff = game->mouseY - game->lastMouseY;
 
 		Card* grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
-		game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData] += xDiff;
-		game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData + 1] += yDiff;
-		game->BufferRefreshFlag_cardsVertexOffsetData = true;
+		game->cardSpriteClass.Buffer_vertexOffsetData[grabbedCard->sprite.BufferIndex_vertexOffsetData] += xDiff;
+		game->cardSpriteClass.Buffer_vertexOffsetData[grabbedCard->sprite.BufferIndex_vertexOffsetData + 1] += yDiff;
+		game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 	}
 
 	//if card is grabbed but LMB is not down, release the card
 	if (!game->lmbDown && validCardReference(game, game->grabbedCardReference)) {
 		Card *grabbedCard = getCardByCardReference(game, game->grabbedCardReference);
-		GLfloat grabbedX = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData];
-		GLfloat grabbedY = game->Buffer_cardsVertexOffsetData[grabbedCard->BufferIndex_cardVertexOffsetData + 1];
+		GLfloat grabbedX = game->cardSpriteClass.Buffer_vertexOffsetData[grabbedCard->sprite.BufferIndex_vertexOffsetData];
+		GLfloat grabbedY = game->cardSpriteClass.Buffer_vertexOffsetData[grabbedCard->sprite.BufferIndex_vertexOffsetData + 1];
 		
 		//reset card Z position
 		Card* card = getCardByCardReference(game, game->grabbedCardReference);
-		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = 1.0f;
+		game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 2] = 1.0f;
 
 		//attempt to put the card in the hand
 		if (grabbedY < 300.0f) {
@@ -558,9 +568,9 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	for (int i = 0; i < game->cards.size(); i++) {
 		if (game->cards[i].mouseIsHovering && i != pickedCardIndex) {
 			game->cards[i].mouseIsHovering = false;
-			cancelCardScalingAnimation(game, game->cards[i].hoverAnimationReference);
-			game->Buffer_cardsScaleValueData[game->cards[i].BufferIndex_cardScaleValueData] = 1.0f;
-			game->BufferRefreshFlag_cardsScaleValueData = true;
+			cancelCardScalingAnimation(game, game->cards[i].sprite.scaleAnimationReference);
+			game->cardSpriteClass.Buffer_scaleValueData[game->cards[i].sprite.BufferIndex_scaleValueData] = 1.0f;
+			game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
 		}
 	}
 	
@@ -574,7 +584,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		cardAnimation.cardReference = cardReference;
 		cardAnimation.animation = animation;
 		IndexReference animationReference = queueCardScalingAnimation(game, cardAnimation);
-		game->cards[pickedCardIndex].hoverAnimationReference = animationReference;
+		game->cards[pickedCardIndex].sprite.scaleAnimationReference = animationReference;
 	}
 
 	if (game->lmbDown && !validCardReference(game, game->grabbedCardReference) && pickedCardIndex > -1) {
@@ -585,7 +595,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 		//raise card Z posision
 		Card* card = getCardByCardReference(game, cardReference);
-		game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = 2.0f;
+		game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 2] = 2.0f;
 	}
 
 	pruneStacksCardReferences(game);
@@ -618,22 +628,22 @@ void resetCardsAtStackPositions(Game* game) {
 			bool cardGrabbed = cardReferencesMatch(stack.orderedCardReferences[i], game->grabbedCardReference);
 			if (!cardGrabbed) {
 				Card* card = getCardByCardReference(game, stack.orderedCardReferences[i]);
-				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData] = stack.x;
-				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 1] = stack.y - (i * 10);
-				game->Buffer_cardsVertexOffsetData[card->BufferIndex_cardVertexOffsetData + 2] = (i+1) * zIncrement;
+				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData] = stack.x;
+				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 1] = stack.y - (i * 10);
+				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 2] = (i+1) * zIncrement;
 			}
 		}
 	}
 
-	game->BufferRefreshFlag_cardsVertexOffsetData = true;
+	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 }
  
 int pickCard(Game *game, float mouseX, float mouseY) {
 	std::vector<int> collidedCardIndexes;
 	for (int i = 0; i < game->cards.size(); i++) {
-		int vertexBufferIndex = game->cards[i].BufferIndex_cardVertexOffsetData;
-		float x{ game->Buffer_cardsVertexOffsetData[vertexBufferIndex] };
-		float y{ game->Buffer_cardsVertexOffsetData[vertexBufferIndex + 1] };
+		int vertexBufferIndex = game->cards[i].sprite.BufferIndex_vertexOffsetData;
+		float x{ game->cardSpriteClass.Buffer_vertexOffsetData[vertexBufferIndex] };
+		float y{ game->cardSpriteClass.Buffer_vertexOffsetData[vertexBufferIndex + 1] };
 		if (mouseX > x && mouseX < x + CARD_WIDTH && mouseY > y && mouseY < y + CARD_HEIGHT && !game->cards[i].deleted) {
 			collidedCardIndexes.push_back(i);
 		}
@@ -645,8 +655,8 @@ int pickCard(Game *game, float mouseX, float mouseY) {
 	else {
 		//sort the cards by their Z value and pick the top one
 		std::sort(collidedCardIndexes.begin(), collidedCardIndexes.end(), [game](int indexA, int indexB) {
-			float zA = game->Buffer_cardsVertexOffsetData[game->cards[indexA].BufferIndex_cardVertexOffsetData + 2];
-			float zB = game->Buffer_cardsVertexOffsetData[game->cards[indexB].BufferIndex_cardVertexOffsetData + 2];
+			float zA = game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[indexA].sprite.BufferIndex_vertexOffsetData + 2];
+			float zB = game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[indexB].sprite.BufferIndex_vertexOffsetData + 2];
 			return zA > zB;
 		});
 		return collidedCardIndexes[0];
@@ -751,7 +761,7 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	card.deleted = false;
 	card.number = number;
 	card.suit = suit;
-	card.BufferIndex_cardVertexOffsetData = game->Buffer_cardsVertexOffsetData.size();
+	card.sprite.BufferIndex_vertexOffsetData = game->cardSpriteClass.Buffer_vertexOffsetData.size();
 	GLfloat x, y, z{ 1.0f };
 	if (stackIndex > -1) {
 		x = game->stacks[stackIndex].x;
@@ -762,16 +772,21 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 		y = 0.0f;
 	}
 
-	game->Buffer_cardsVertexOffsetData.push_back(x);
-	game->Buffer_cardsVertexOffsetData.push_back(y);
-	game->Buffer_cardsVertexOffsetData.push_back(z);
+	game->cardSpriteClass.Buffer_vertexOffsetData.push_back(x);
+	game->cardSpriteClass.Buffer_vertexOffsetData.push_back(y);
+	game->cardSpriteClass.Buffer_vertexOffsetData.push_back(z);
 
-	card.BufferIndex_cardTextureOffsetData = game->Buffer_cardsTextureOffsetData.size();
-	game->Buffer_cardsTextureOffsetData.push_back(((GLfloat)suit) * (GLfloat)0.125f);
-	game->Buffer_cardsTextureOffsetData.push_back((GLfloat)0.0f);
+	card.sprite.BufferIndex_textureOffsetData = game->cardSpriteClass.Buffer_textureOffsetData.size();
+	game->cardSpriteClass.Buffer_textureOffsetData.push_back(((GLfloat)suit) * (GLfloat)0.125f);
+	game->cardSpriteClass.Buffer_textureOffsetData.push_back((GLfloat)0.0f);
 
-	card.BufferIndex_cardScaleValueData = game->Buffer_cardsScaleValueData.size();
-	game->Buffer_cardsScaleValueData.push_back(1.0f);
+	card.sprite.BufferIndex_scaleValueData = game->cardSpriteClass.Buffer_scaleValueData.size();
+	game->cardSpriteClass.Buffer_scaleValueData.push_back(1.0f);
+
+	card.sprite.BufferIndex_tintValueData = game->cardSpriteClass.Buffer_tintValueData.size();
+	game->cardSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->cardSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->cardSpriteClass.Buffer_tintValueData.push_back(1.0f);
 
 	int cardIndex = game->cards.size();
 	game->cards.push_back(card);

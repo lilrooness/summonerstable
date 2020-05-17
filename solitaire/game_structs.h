@@ -66,12 +66,13 @@ struct Card {
 	bool deleted;
 	int generation;
 	bool mouseIsHovering{ false };
-	IndexReference hoverAnimationReference;
+	Sprite sprite;
+	//IndexReference hoverAnimationReference;
 
-	int BufferIndex_cardTextureOffsetData;
-	int BufferIndex_cardVertexOffsetData;
-	int BufferIndex_cardScaleValueData;
-	int BufferIndex_numberTextureOffsetData;
+	//int BufferIndex_cardTextureOffsetData;
+	//int BufferIndex_cardVertexOffsetData;
+	//int BufferIndex_cardScaleValueData;
+	//int BufferIndex_numberTextureOffsetData;
 };
 
 struct Attack {
@@ -123,9 +124,10 @@ struct Game {
 
 	int handLimit;
 
-	std::vector<GLfloat> Buffer_cardsVertexOffsetData;
-	std::vector<GLfloat> Buffer_cardsTextureOffsetData;
-	std::vector<GLfloat> Buffer_cardsScaleValueData;
+	//std::vector<GLfloat> Buffer_cardsVertexOffsetData;
+	//std::vector<GLfloat> Buffer_cardsTextureOffsetData;
+	//std::vector<GLfloat> Buffer_cardsScaleValueData;
+	SpriteClass cardSpriteClass;
 
 	std::vector<GLfloat> Buffer_attacksVertexOffsetData;
 	std::vector<GLfloat> Buffer_attacksTextureOffsetData;
@@ -146,15 +148,15 @@ struct Game {
 	std::vector<CardAnimation> cardScalingAnimations;
 	std::vector<Attack> attacks;
 
-	bool BufferRefreshFlag_cardsVertexOffsetData;
-	bool BufferRefreshFlag_cardsTextureOffsetData;
+	//bool BufferRefreshFlag_cardsVertexOffsetData;
+	//bool BufferRefreshFlag_cardsTextureOffsetData;
 	
 	bool BufferRefreshFlag_numbersTextureOffsetData;
 	
 	bool BufferRefreshFlag_candlesVertexOffsetData;
 	bool BufferRefreshFlag_candlesTextureOffsetData;
 	bool BufferRefreshFlag_candlesStateData;
-	bool BufferRefreshFlag_cardsScaleValueData;
+	//bool BufferRefreshFlag_cardsScaleValueData;
 	
 	bool BufferRefreshFlag_attacksVertexOffsetData;
 	bool BufferRefreshFlag_attacksTextureOffsetData;

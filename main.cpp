@@ -43,13 +43,12 @@ const GLint PROJECTION_LOCATION = 2;
 unsigned int cardTexture;
 unsigned int candelTexture;
 
-InstancedSpriteMeshMaterial2D cardMeshMaterial;
+//InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
 InstancedSpriteMeshMaterial2D attackMeshMaterial;
 
 SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
-SpriteMaterial spellsSpriteMaterial;
 
 
 glm::mat4 proj;
@@ -197,6 +196,13 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		initSpriteMaterial(cardVertexData, 20,
+			game->cardSpriteClass.Buffer_tintValueData,
+			game->cardSpriteClass.Buffer_scaleValueData,
+			game->cardSpriteClass.Buffer_vertexOffsetData,
+			game->cardSpriteClass.Buffer_textureOffsetData,
+			&game->cardSpriteClass.material);
+
 		initSpriteMaterial(summonCircleVertexData, 20,
 			game->Buffer_circleTintValueData,
 			game->Buffer_circleScaleValueData,
@@ -216,26 +222,7 @@ bool initGL(Game *game) {
 			game->spellSpriteClass.Buffer_scaleValueData,
 			game->spellSpriteClass.Buffer_vertexOffsetData,
 			game->spellSpriteClass.Buffer_textureOffsetData,
-			&spellsSpriteMaterial);
-
-		InstancedSpriteShaderAttribute_Float cardScaleAttrib;
-		cardScaleAttrib.id = 0;
-		cardScaleAttrib.name = "scaleValue";
-		cardScaleAttrib.dim = 1;
-		cardScaleAttrib.location = glGetAttribLocation(gProgramID, cardScaleAttrib.name);
-		cardScaleAttrib.instancedData = game->Buffer_cardsScaleValueData.data();
-		cardScaleAttrib.instancedDataSize = game->Buffer_cardsScaleValueData.size();
-
-		initInstancedSpriteMeshMaterial_2D(
-			gVertexPos2DLocation,
-			gTextureTranslationLocation,
-			gTextureUVLocation,
-			gVertexTranslationLocation,
-			cardVertexData, 20,
-			game->Buffer_cardsTextureOffsetData.data(), game->Buffer_cardsTextureOffsetData.size(),
-			game->Buffer_cardsVertexOffsetData.data(), game->Buffer_cardsVertexOffsetData.size(),
-			std::vector<InstancedSpriteShaderAttribute_Float> { cardScaleAttrib },
-			&cardMeshMaterial);
+			&game->spellSpriteClass.material);
 
 		InstancedSpriteShaderAttribute_Float candleOnShaderAttrib;
 		candleOnShaderAttrib.id = 0;
@@ -277,8 +264,12 @@ void render_fun(Game *game) {
 	glBindVertexArray(attackSpriteMaterial.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
 	
-	glBindVertexArray(spellsSpriteMaterial.BufferHandle_VAO);
+	glBindVertexArray(game->spellSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
+
+	glBindTexture(GL_TEXTURE_2D, cardTexture);
+	glBindVertexArray(game->cardSpriteClass.material.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->cardSpriteClass.Buffer_vertexOffsetData.size() / 3);
 
 	glUseProgram(gCandelProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -289,15 +280,13 @@ void render_fun(Game *game) {
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
 
-	glUseProgram(gProgramID);
+	//glUseProgram(gProgramID);
 
-	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
+	//glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	//glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
+	//glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
-	glBindTexture(GL_TEXTURE_2D, cardTexture);
-	glBindVertexArray(cardMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_cardsVertexOffsetData.size() / 3);
+
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -426,20 +415,6 @@ int main( int argc, char* args[] )
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
 		}
 
-		if (game.BufferRefreshFlag_cardsVertexOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.positionOffsetVBO_instanced);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsVertexOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsVertexOffsetData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.BufferRefreshFlag_cardsVertexOffsetData = false;
-		}
-
-		if (game.BufferRefreshFlag_cardsTextureOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.textureOffsetVBO_instanced);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_cardsTextureOffsetData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.BufferRefreshFlag_cardsTextureOffsetData = false;
-		}
-
 		if (game.BufferRefreshFlag_candlesStateData) {
 			candelsMeshMaterial.shaderAttributes[0].instancedData = game.Buffer_candlesStateData.data();
 			candelsMeshMaterial.shaderAttributes[0].instancedDataSize = game.Buffer_candlesStateData.size();
@@ -456,13 +431,19 @@ int main( int argc, char* args[] )
 			game.BufferRefreshFlag_candlesTextureOffsetData = false;
 		}
 
-		if (game.BufferRefreshFlag_cardsScaleValueData) {
-			cardMeshMaterial.shaderAttributes[0].instancedData = game.Buffer_cardsScaleValueData.data();
-			cardMeshMaterial.shaderAttributes[0].instancedDataSize = game.Buffer_cardsScaleValueData.size();
-			glBindBuffer(GL_ARRAY_BUFFER, cardMeshMaterial.shaderAttributes[0].bufferHandle);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_cardsScaleValueData.size() * sizeof(GLfloat), game.Buffer_cardsScaleValueData.data(), GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.BufferRefreshFlag_cardsScaleValueData = false;
+		if (game.cardSpriteClass.BufferRefreshFlag_vertexOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.cardSpriteClass.material.BufferHandle_vertexOffsetData, game.cardSpriteClass.Buffer_vertexOffsetData, GL_STATIC_DRAW);
+			game.cardSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
+		}
+
+		if (game.cardSpriteClass.BufferRefreshFlag_textureOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.cardSpriteClass.material.BufferHandle_textureOffsetData, game.cardSpriteClass.Buffer_textureOffsetData, GL_STATIC_DRAW);
+			game.cardSpriteClass.BufferRefreshFlag_textureOffsetData = false;
+		}
+
+		if (game.cardSpriteClass.BufferRefreshFlag_scaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.cardSpriteClass.material.BufferHandleInstanced_scaleData, game.cardSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			game.cardSpriteClass.BufferRefreshFlag_scaleValueData = false;
 		}
 
 		if (game.BufferRefreshFlag_attacksVertexOffsetData) {
@@ -486,7 +467,7 @@ int main( int argc, char* args[] )
 		}
 
 		if (game.spellSpriteClass.BufferRefreshFlag_scaleValueData) {
-			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, spellsSpriteMaterial.BufferHandleInstanced_scaleData, game.spellSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellSpriteClass.material.BufferHandleInstanced_scaleData, game.spellSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
 			game.spellSpriteClass.BufferRefreshFlag_tintValueData = false;
 		}
 
