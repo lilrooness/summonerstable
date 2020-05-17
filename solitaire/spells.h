@@ -1,6 +1,7 @@
 #pragma once
 #include "game_structs.h"
 #include "animation.h"
+#include "sprite.h"
 
 void tickSpells(Game* game) {
 
