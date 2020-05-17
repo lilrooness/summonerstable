@@ -148,6 +148,8 @@
     <ClInclude Include="animation.h" />
     <ClInclude Include="game_structs.h" />
     <ClInclude Include="card.h" />
+    <ClInclude Include="sprite.h" />
+    <ClInclude Include="reference.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="shader_reader.h" />

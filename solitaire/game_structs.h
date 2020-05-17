@@ -4,6 +4,9 @@
 #include <GL/GLU.h>
 #include "animation.h"
 #include "sound.h"
+#include "sprite_material.h"
+#include "reference.h"
+#include "sprite.h"
 
 const float DEFUALT_MODEL_SCALE = 256.0f;
 
@@ -30,20 +33,13 @@ const float	CARD_HEIGHT = 0.5f * 512.0f;
 
 struct Spell;
 struct Game;
-struct IndexReference;
 struct CardReference;
 struct Card;
 struct Attack;
 struct Candle;
 struct Stack;
 struct StoredStack;
-struct IndexReference;
 struct CardReference;
-
-struct IndexReference {
-	int index;
-	int generation;
-};
 
 struct CardReference {
 	int cardIndex;
@@ -56,21 +52,11 @@ struct CardAnimation {
 	int generation;
 };
 
-struct SpellAnimation {
-	FloatAnimation animation;
-	int spellIndex;
-	int generation;
-};
-
 struct Spell {
-	int BufferIndex_spellVertexOffsetData;
-	int BufferIndex_spellTextureOffsetData;
-	int BufferIndex_spellScaleValueData;
-	int BufferIndex_spellTintValueData;
 	std::vector<Suit> requirements;
 	void (*castSpell)(Game* game);
 	bool mouseHovering = false;
-	IndexReference hoverAnimationReference;
+	Sprite sprite;
 };
 
 
@@ -155,14 +141,9 @@ struct Game {
 	std::vector<GLfloat> Buffer_circleTintValueData;
 	std::vector<GLfloat> Buffer_circleScaleValueData;
 
-	std::vector<GLfloat> Buffer_spellsVertexOffsetData;
-	std::vector<GLfloat> Buffer_spellsScaleValueData;
-	std::vector<GLfloat> Buffer_spellsTextureOffsetData;
-	std::vector<GLfloat> Buffer_spellsTintValueData;
+	SpriteClass spellSpriteClass;
 
 	std::vector<CardAnimation> cardScalingAnimations;
-	std::vector<SpellAnimation> spellScalingAnimations;
-
 	std::vector<Attack> attacks;
 
 	bool BufferRefreshFlag_cardsVertexOffsetData;
@@ -184,11 +165,5 @@ struct Game {
 	bool BufferRefreshFlag_circleTextureOffsetData;
 	bool BufferRefreshFlag_circleTintValueData;
 
-	bool BufferRefreshFlag_spellsVertexOffsetData;
-	bool BufferRefreshFlag_spellsTextureOffsetData;
-	bool BufferRefreshFlag_spellsScaleValueData;
-	bool BufferRefreshFlag_spellsTintValueData;
-
-	
 	SoundState soundState;
 };

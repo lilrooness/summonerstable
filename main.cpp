@@ -212,10 +212,10 @@ bool initGL(Game *game) {
 			&attackSpriteMaterial);
 
 		initSpriteMaterial(spellsVertexData, 20,
-			game->Buffer_spellsTintValueData,
-			game->Buffer_spellsScaleValueData,
-			game->Buffer_spellsVertexOffsetData,
-			game->Buffer_spellsTextureOffsetData,
+			game->spellSpriteClass.Buffer_tintValueData,
+			game->spellSpriteClass.Buffer_scaleValueData,
+			game->spellSpriteClass.Buffer_vertexOffsetData,
+			game->spellSpriteClass.Buffer_textureOffsetData,
 			&spellsSpriteMaterial);
 
 		InstancedSpriteShaderAttribute_Float cardScaleAttrib;
@@ -278,7 +278,7 @@ void render_fun(Game *game) {
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
 	
 	glBindVertexArray(spellsSpriteMaterial.BufferHandle_VAO);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_spellsTextureOffsetData.size() / 2);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
 
 	glUseProgram(gCandelProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -485,9 +485,9 @@ int main( int argc, char* args[] )
 			game.BufferRefreshFlag_circleTintValueData = false;
 		}
 
-		if (game.BufferRefreshFlag_spellsScaleValueData) {
-			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, spellsSpriteMaterial.BufferHandleInstanced_scaleData, game.Buffer_spellsScaleValueData, GL_STATIC_DRAW);
-			game.BufferRefreshFlag_spellsTintValueData = false;
+		if (game.spellSpriteClass.BufferRefreshFlag_scaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, spellsSpriteMaterial.BufferHandleInstanced_scaleData, game.spellSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			game.spellSpriteClass.BufferRefreshFlag_tintValueData = false;
 		}
 
 		render_fun(&game);
