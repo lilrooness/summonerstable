@@ -437,6 +437,11 @@ int main( int argc, char* args[] )
 			game.cardSpriteClass.BufferRefreshFlag_scaleValueData = false;
 		}
 
+		if (game.cardSpriteClass.BufferRefreshFlag_tintValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.cardSpriteClass.material.BufferHandleInstanced_tintData, game.cardSpriteClass.Buffer_tintValueData, GL_STATIC_DRAW);
+			game.cardSpriteClass.BufferRefreshFlag_tintValueData;
+		}
+
 		if (game.BufferRefreshFlag_attacksVertexOffsetData) {
 			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_vertexOffsetData, game.Buffer_attacksVertexOffsetData, GL_STATIC_DRAW);
 			game.BufferRefreshFlag_attacksVertexOffsetData = false;

@@ -352,6 +352,7 @@ void endTurn(Game* game) {
 	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
+	game->cardSpriteClass.BufferRefreshFlag_tintValueData = true;
 
 	game->turnEndedByPlayer = false;
 	game->turn++;
