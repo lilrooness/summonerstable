@@ -4,12 +4,7 @@
 
 void tickSpells(Game* game) {
 
-	for (int i = 0; i < game->spellSpriteClass.scaleAnimations.size(); i++) {
-		if (!game->spellSpriteClass.scaleAnimations[i].flaotAnimation.done) {
-			game->spellSpriteClass.Buffer_scaleValueData[game->spells[game->spellSpriteClass.scaleAnimations[i].spriteIndex].sprite.BufferIndex_scaleValueData] = getCurrentAnimationValue(game->spellSpriteClass.scaleAnimations[i].flaotAnimation, game->gameTime);
-			game->spellSpriteClass.BufferRefreshFlag_scaleValueData = true;
-		}
-	}
+	resolveScaleAnimations<Spell>(game->spellSpriteClass, game->spells, game->gameTime);
 
 	for (int i = 0; i < game->spells.size(); i++) {
 

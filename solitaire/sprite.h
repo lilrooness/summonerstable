@@ -12,6 +12,8 @@ struct Sprite;
 
 IndexReference queueScaleAnimation(SpriteClass& spriteClass, int spriteIndex, float from, float to, float duration, float startedAt);
 void cancelScaleAnimation(SpriteClass& spriteClass, IndexReference indexReference, const Sprite& sprite);
+template<typename T>
+void resolveScaleAnimations(SpriteClass& spriteClass, std::vector<T> spriteObjects, float gameTime);
 
 struct Sprite {
 	int BufferIndex_vertexOffsetData;
@@ -44,6 +46,18 @@ struct SpriteClass {
 
 	float defaultScale{ 1.0f };
 };
+
+template<typename T>
+void resolveScaleAnimations(SpriteClass& spriteClass, std::vector<T> spriteObjects, float gameTime) {
+	for (int i = 0; i < spriteClass.scaleAnimations.size(); i++) {
+		if (!spriteClass.scaleAnimations[i].flaotAnimation.done) {
+			int spriteIndex = spriteClass.scaleAnimations[i].spriteIndex;
+			int scaleValueBufferIndex = spriteObjects[spriteIndex].sprite.BufferIndex_scaleValueData;
+			spriteClass.Buffer_scaleValueData[scaleValueBufferIndex] = getCurrentAnimationValue(spriteClass.scaleAnimations[i].flaotAnimation, gameTime);
+			spriteClass.BufferRefreshFlag_scaleValueData = true;
+		}
+	}
+}
 
 void cancelScaleAnimation(SpriteClass& spriteClass, IndexReference indexReference, const Sprite& sprite) {
 	if (indexReference.index < spriteClass.scaleAnimations.size()

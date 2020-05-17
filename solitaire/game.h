@@ -28,7 +28,6 @@ void endTurn(Game* game);
 int countRemainingCandles(Game* game);
 CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, float y);
 bool markCardAsDeleted(Game* game, const CardReference& cardReference);
-void resolveCardScaleAnimations(Game* game);
 void initCircle(Game* game);
 void addAttacks(Game *game);
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
@@ -209,17 +208,6 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	game->attacks.push_back(attack);
 
 	return attackIndex;
-}
-
-void resolveCardScaleAnimations(Game* game) {
-	for (int i = 0; i < game->cardSpriteClass.scaleAnimations.size(); i++) {
-		if (!game->cardSpriteClass.scaleAnimations[i].flaotAnimation.done) {
-			int cardIndex = game->cardSpriteClass.scaleAnimations[i].spriteIndex;
-			int cardScaleBufferIndex = game->cards[cardIndex].sprite.BufferIndex_scaleValueData;
-			game->cardSpriteClass.Buffer_scaleValueData[cardScaleBufferIndex] = getCurrentAnimationValue(game->cardSpriteClass.scaleAnimations[i].flaotAnimation, game->gameTime);
-			game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
-		}
-	}
 }
 
 bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
@@ -425,8 +413,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 	game->gameTime += dt;
 	tickSpells(game);
-	resolveCardScaleAnimations(game);
-
+	resolveScaleAnimations<Card>(game->cardSpriteClass, game->cards, game->gameTime);
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
 	game->mouseX = mouseX;
