@@ -28,11 +28,7 @@ void endTurn(Game* game);
 int countRemainingCandles(Game* game);
 CardReference reuseOrCreateNewCard(Game *game, Suit suit, int number, float x, float y);
 bool markCardAsDeleted(Game* game, const CardReference& cardReference);
-//void resolveCardScaleAnimations(Game* game);
-IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation);
-void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference);
-bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference);
-CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference);
+void resolveCardScaleAnimations(Game* game);
 void initCircle(Game* game);
 void addAttacks(Game *game);
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
@@ -215,70 +211,16 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	return attackIndex;
 }
 
-void cancelCardScalingAnimation(Game* game, const IndexReference& scalingAnimationReference) {
-	if (validScalingRefereceAnimation(game, scalingAnimationReference)) {
-		CardAnimation* cardAnimation = getCardAnimationByIndexReference(game, scalingAnimationReference);
-		cardAnimation->animation.done = true;
-	}
-}
-
-CardAnimation* getCardAnimationByIndexReference(Game* game, const IndexReference& scalingAnimationReference) {
-	if (validScalingRefereceAnimation(game, scalingAnimationReference)) {
-		return &game->cardScalingAnimations[scalingAnimationReference.index];
-	}
-
-	return nullptr;
-}
-
-bool validScalingRefereceAnimation(Game* game, const IndexReference& scalingAnimationReference) {
-	if (scalingAnimationReference.index >= game->cardScalingAnimations.size()) {
-		return false;
-	}
-	
-	if (scalingAnimationReference.generation != game->cardScalingAnimations[scalingAnimationReference.index].generation) {
-		return false;
-	}
-	
-	return true;
-}
-
-IndexReference queueCardScalingAnimation(Game* game, CardAnimation cardScalingAnimation) {
-	for (int i = 0; i < game->cardScalingAnimations.size(); i++) {
-		if (!validCardReference(game, game->cardScalingAnimations[i].cardReference) || game->cardScalingAnimations[i].animation.done) {
-			int currentGeneration = game->cardScalingAnimations[i].generation;
-			game->cardScalingAnimations[i] = cardScalingAnimation;
-			game->cardScalingAnimations[i].generation = currentGeneration + 1;
-			IndexReference ref;
-			ref.index = i;
-			ref.generation = game->cardScalingAnimations[i].generation;
-			return ref;
+void resolveCardScaleAnimations(Game* game) {
+	for (int i = 0; i < game->cardSpriteClass.scaleAnimations.size(); i++) {
+		if (!game->cardSpriteClass.scaleAnimations[i].flaotAnimation.done) {
+			int cardIndex = game->cardSpriteClass.scaleAnimations[i].spriteIndex;
+			int cardScaleBufferIndex = game->cards[cardIndex].sprite.BufferIndex_scaleValueData;
+			game->cardSpriteClass.Buffer_scaleValueData[cardScaleBufferIndex] = getCurrentAnimationValue(game->cardSpriteClass.scaleAnimations[i].flaotAnimation, game->gameTime);
+			game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
 		}
 	}
-
-	cardScalingAnimation.generation = 0;
-	int newIndex = game->cardScalingAnimations.size();
-	game->cardScalingAnimations.push_back(cardScalingAnimation);
-
-	IndexReference indexReference;
-	indexReference.generation = cardScalingAnimation.generation;
-	indexReference.index = newIndex;
-	
-	return indexReference;
 }
-
-//void resolveCardScaleAnimations(Game* game) {
-//	for (CardAnimation& cardAnimation : game->cardScalingAnimations) {
-//		if (!cardAnimation.animation.done && validCardReference(game, cardAnimation.cardReference)) {
-//			float currentAnimationValue = getCurrentAnimationValue(cardAnimation.animation, game->gameTime);
-//			Card* card = getCardByCardReference(game, cardAnimation.cardReference);
-//			game->Buffer_cardsScaleValueData[card->BufferIndex_cardScaleValueData] = currentAnimationValue;
-//			game->BufferRefreshFlag_cardsScaleValueData = true;
-//		}
-//		else {
-//			cardAnimation.animation.done = true;
-//		}
-//	}
-//}
 
 bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 
@@ -407,7 +349,6 @@ void endTurn(Game* game) {
 		game->stacks[i].orderedCardReferences.push_back(cardReference);
 	}
 
-	//game->BufferRefreshFlag_numbersTextureOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
@@ -483,7 +424,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 	game->gameTime += dt;
 	tickSpells(game);
-	//resolveCardScaleAnimations(game);
+	resolveCardScaleAnimations(game);
 
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
@@ -568,9 +509,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	for (int i = 0; i < game->cards.size(); i++) {
 		if (game->cards[i].mouseIsHovering && i != pickedCardIndex) {
 			game->cards[i].mouseIsHovering = false;
-			cancelCardScalingAnimation(game, game->cards[i].sprite.scaleAnimationReference);
-			game->cardSpriteClass.Buffer_scaleValueData[game->cards[i].sprite.BufferIndex_scaleValueData] = 1.0f;
-			game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
+			cancelScaleAnimation(game->cardSpriteClass, game->cards[i].sprite.scaleAnimationReference, game->cards[i].sprite);
 		}
 	}
 	
@@ -583,7 +522,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 		CardAnimation cardAnimation;
 		cardAnimation.cardReference = cardReference;
 		cardAnimation.animation = animation;
-		IndexReference animationReference = queueCardScalingAnimation(game, cardAnimation);
+		IndexReference animationReference = queueScaleAnimation(game->cardSpriteClass, pickedCardIndex, 1.0f, 1.1f, 5, game->gameTime);
 		game->cards[pickedCardIndex].sprite.scaleAnimationReference = animationReference;
 	}
 

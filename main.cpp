@@ -43,7 +43,6 @@ const GLint PROJECTION_LOCATION = 2;
 unsigned int cardTexture;
 unsigned int candelTexture;
 
-//InstancedSpriteMeshMaterial2D cardMeshMaterial;
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
 InstancedSpriteMeshMaterial2D attackMeshMaterial;
 
@@ -279,14 +278,6 @@ void render_fun(Game *game) {
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
-
-	//glUseProgram(gProgramID);
-
-	//glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	//glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	//glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
-
-
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);

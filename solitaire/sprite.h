@@ -1,4 +1,7 @@
 #pragma once
+
+// TODO: SpriteAnimation - replace spriteIndex with an IndexReference
+
 #include "sprite_material.h"
 #include "reference.h"
 #include "animation.h"
@@ -9,6 +12,20 @@ struct Sprite;
 
 IndexReference queueScaleAnimation(SpriteClass& spriteClass, int spriteIndex, float from, float to, float duration, float startedAt);
 void cancelScaleAnimation(SpriteClass& spriteClass, IndexReference indexReference, const Sprite& sprite);
+
+struct Sprite {
+	int BufferIndex_vertexOffsetData;
+	int BufferIndex_textureOffsetData;
+	int BufferIndex_tintValueData;
+	int BufferIndex_scaleValueData;
+	IndexReference scaleAnimationReference;
+};
+
+struct SpriteAnimation {
+	FloatAnimation flaotAnimation;
+	int spriteIndex;
+	int	spriteGeneration;
+};
 
 struct SpriteClass {
 	SpriteMaterial material;
@@ -26,20 +43,6 @@ struct SpriteClass {
 	std::vector<SpriteAnimation> scaleAnimations;
 
 	float defaultScale{ 1.0f };
-};
-
-struct Sprite {
-	int BufferIndex_vertexOffsetData;
-	int BufferIndex_textureOffsetData;
-	int BufferIndex_tintValueData;
-	int BufferIndex_scaleValueData;
-	IndexReference scaleAnimationReference;
-};
-
-struct SpriteAnimation {
-	FloatAnimation flaotAnimation;
-	int spriteIndex;
-	int	spriteGeneration;
 };
 
 void cancelScaleAnimation(SpriteClass& spriteClass, IndexReference indexReference, const Sprite& sprite) {
@@ -67,6 +70,8 @@ IndexReference queueScaleAnimation(SpriteClass& spriteClass, int spriteIndex, fl
 			IndexReference reference;
 			reference.generation = spriteClass.scaleAnimations[i].spriteGeneration;
 			reference.index = i;
+
+			return reference;
 		}
 	}
 
