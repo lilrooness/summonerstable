@@ -268,8 +268,8 @@ CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, f
 			game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[i].sprite.BufferIndex_vertexOffsetData + 1] = 0.0f;
 			game->cardSpriteClass.Buffer_vertexOffsetData[game->cards[i].sprite.BufferIndex_vertexOffsetData + 2] = 1.0f;
 
-			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData] = (GLfloat)suit * (GLfloat)0.125f;
-			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData + 1] = (GLfloat)0.0f;
+			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData] = (GLfloat)suit * (GLfloat)CARD_SPRITE_WIDTH;//(GLfloat)suit * (GLfloat)0.125f;
+			game->cardSpriteClass.Buffer_textureOffsetData[game->cards[i].sprite.BufferIndex_textureOffsetData + 1] = (GLfloat)CARD_SPRITE_ROW;//(GLfloat)0.0f;
 
 			game->cardSpriteClass.Buffer_scaleValueData[game->cards[i].sprite.BufferIndex_scaleValueData] = (GLfloat)1.0f;
 
@@ -704,8 +704,8 @@ int createNewCard(Game* game, Suit suit, int number, int stackIndex) {
 	game->cardSpriteClass.Buffer_vertexOffsetData.push_back(z);
 
 	card.sprite.BufferIndex_textureOffsetData = game->cardSpriteClass.Buffer_textureOffsetData.size();
-	game->cardSpriteClass.Buffer_textureOffsetData.push_back(((GLfloat)suit) * (GLfloat)0.125f);
-	game->cardSpriteClass.Buffer_textureOffsetData.push_back((GLfloat)0.0f);
+	game->cardSpriteClass.Buffer_textureOffsetData.push_back((GLfloat)suit * CARD_SPRITE_WIDTH);//(((GLfloat)suit) * (GLfloat)0.125f);
+	game->cardSpriteClass.Buffer_textureOffsetData.push_back((GLfloat)CARD_SPRITE_ROW);//((GLfloat)0.0f);
 
 	card.sprite.BufferIndex_scaleValueData = game->cardSpriteClass.Buffer_scaleValueData.size();
 	game->cardSpriteClass.Buffer_scaleValueData.push_back(1.0f);

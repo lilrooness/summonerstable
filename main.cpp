@@ -40,7 +40,6 @@ const GLint VIEW_LOCATION = 1;
 GLint gProjectionLocation = -1;
 const GLint PROJECTION_LOCATION = 2;
 
-unsigned int cardTexture;
 unsigned int candelTexture;
 
 InstancedSpriteMeshMaterial2D candelsMeshMaterial;
@@ -71,26 +70,7 @@ bool initGL(Game *game) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glGenTextures(1, &cardTexture);
-	glBindTexture(GL_TEXTURE_2D, cardTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	int height, width, nColourChannels;
-	unsigned char* cardTextureData = stbi_load("textures/cards_sprites.png", &width, &height, &nColourChannels, 0);
-
-	glBindTexture(GL_TEXTURE_2D, cardTexture);
-	if (cardTextureData) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cardTextureData);
-	} else {
-		std::cout << "Failed to load card texture" << std::endl;
-	}
-
-	stbi_image_free(cardTextureData);
-
 	unsigned char* candelTextureData = stbi_load("textures/candels.png", &width, &height, &nColourChannels, 0);
 
 	glBindTexture(GL_TEXTURE_2D, candelTexture);
@@ -133,9 +113,9 @@ bool initGL(Game *game) {
 			0.5f, 1.0f, 0.0f,
 			0.0f, 1.0f, 0.0f,
 			//Texture Coordinates
-			0.0f, 0.25f,
-			0.125f, 0.25f,
-			0.125f, 0.0f,
+			0.0f, CARD_SPRITE_HEIGHT,
+			CARD_SPRITE_WIDTH, CARD_SPRITE_HEIGHT,
+			CARD_SPRITE_WIDTH, 0.0f,
 			0.0f, 0.0f
 		};
 
@@ -266,7 +246,7 @@ void render_fun(Game *game) {
 	glBindVertexArray(game->spellSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
 
-	glBindTexture(GL_TEXTURE_2D, cardTexture);
+	//glBindTexture(GL_TEXTURE_2D, cardTexture);
 	glBindVertexArray(game->cardSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->cardSpriteClass.Buffer_vertexOffsetData.size() / 3);
 

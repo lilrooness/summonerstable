@@ -10,6 +10,10 @@
 
 const float DEFUALT_MODEL_SCALE = 256.0f;
 
+const float CARD_SPRITE_ROW = 1.0f / 16.0f * 5.0f;
+const float CARD_SPRITE_HEIGHT = 1.0f / 16.0f;
+const float CARD_SPRITE_WIDTH = 0.5f / 16.0f;
+
 const float NEW_CANDLE_SPRITE_ROW = 1.0f/16.0f * 10.0f;
 const float NEW_CANDLE_SPRITE_HEIGHT = 2.0f * (1.0f / 16.0f);
 const float NEW_CANDLE_SPRITE_WIDTH = 1.0f * (1.0f / 16.0f);
