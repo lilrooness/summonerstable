@@ -1,4 +1,8 @@
 #pragma once
+
+#include <map>
+#include <algorithm>
+
 #include "game_structs.h"
 #include "animation.h"
 #include "sprite.h"
@@ -6,6 +10,8 @@
 void showSpellPopup(Game* game, Spell& spell);
 void createNewSpellPopup(Game* game, float x, float y, Spell& spell);
 void hideSpellPopup(Game* game, const Spell& spell);
+bool canCastSpell(Game* game, const Spell& spell);
+void castSpell(Game* game, const Spell& spell);
 
 void tickSpells(Game* game) {
 
@@ -27,6 +33,10 @@ void tickSpells(Game* game) {
 				game->spells[i].sprite.scaleAnimationReference = queueScaleAnimation(game->spellSpriteClass, i, 0.5, 0.6, 5, game->gameTime);
 				showSpellPopup(game, game->spells[i]);
 			}
+
+			if (game->spells[i].mouseHovering && game->lmbDown) {
+				castSpell(game, game->spells[i]);
+			}
 		}
 		else {
 			if (game->spells[i].mouseHovering) {
@@ -42,7 +52,6 @@ void tickSpells(Game* game) {
 }
 
 void hideSpellPopup(Game* game, const Spell& spell) {
-	
 
 	if (spell.spellPopupReference.index < game->spellPopups.size() && spell.spellPopupReference.generation == game->spellPopups[spell.spellPopupReference.index].generation) {
 		game->spellPopupSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
@@ -62,7 +71,7 @@ void showSpellPopup(Game* game, Spell& spell) {
 	game->spellPopupSpriteClass.BufferRefreshFlag_tintValueData = true;
 	game->spellPopupSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 	game->spellPopupSpriteClass.BufferRefreshFlag_textureOffsetData = true;
-
+	
 	for (int i = 0; i < game->spellPopups.size(); i++) {
 		if (!game->spellPopups[i].showing) {
 	
@@ -71,21 +80,21 @@ void showSpellPopup(Game* game, Spell& spell) {
 			game->spellPopupSpriteClass.Buffer_vertexOffsetData[vertexOffsetBufferIndex] = spellX + 100;
 			game->spellPopupSpriteClass.Buffer_vertexOffsetData[vertexOffsetBufferIndex + 1] = spellY;
 			game->spellPopupSpriteClass.Buffer_scaleValueData[game->spellPopups[i].sprite.BufferIndex_scaleValueData] = 0.0f;
-
+	
 			IndexReference popupReference;
 			popupReference.generation = ++game->spellPopups[i].generation;
 			popupReference.index = i;
 			spell.spellPopupReference = popupReference;
-
+	
 			queueScaleAnimation(game->spellPopupSpriteClass, popupReference.index, 0, 1.0f, 10, game->gameTime);
-
+	
 			return;
 		}
 	}
 	createNewSpellPopup(game, spellX, spellY, spell);
 }
 
-void createNewSpellPopup(Game *game, float x, float y, Spell& spell) {
+void createNewSpellPopup(Game* game, float x, float y, Spell& spell) {
 	SpellPopup spellPopup;
 	spellPopup.generation = 0;
 	spellPopup.showing = true;
@@ -112,7 +121,7 @@ void createNewSpellPopup(Game *game, float x, float y, Spell& spell) {
 
 	spell.spellPopupReference.index = game->spellPopups.size();
 	spell.spellPopupReference.generation = spellPopup.generation;
-	
+
 	queueScaleAnimation(game->spellPopupSpriteClass, spell.spellPopupReference.index, 0, 1.0f, 10, game->gameTime);
 
 	game->spellPopups.push_back(spellPopup);
@@ -130,4 +139,44 @@ void summonDemon(Game* game) {
 	}
 
 	game->summonLevel++;
+}
+
+void castSpell(Game* game, const Spell& spell) {
+	if (canCastSpell(game, spell)) {
+		if (spell.type == SpellType::SUMMON_SPELL) {
+
+			//delete cards used for spell
+			for (Suit suit : spell.requirements) {
+				auto it = std::find_if(game->handCards.begin(), game->handCards.end(), [game, suit](CardReference ref) {
+					return ref.cardIndex < game->cards.size() && game->cards[ref.cardIndex].suit == suit;
+					});
+
+				if (it != game->handCards.end()) {
+					deleteCard(game, *it);
+					game->handCards.erase(it);
+				}
+			}
+			summonDemon(game);
+		}
+	}
+}
+
+bool canCastSpell(Game* game, const Spell& spell) {
+
+	std::vector<CardReference> tempHand = game->handCards;
+
+	for (Suit suit : spell.requirements) {
+		auto it = std::find_if(tempHand.begin(), tempHand.end(), [game, suit](CardReference ref) {
+			return ref.cardIndex < game->cards.size() && game->cards[ref.cardIndex].suit == suit;
+		});
+
+		if (it != tempHand.end()) {
+			tempHand.erase(it);
+		}
+		else {
+			return false;
+		}
+	}
+
+	return true;
 }

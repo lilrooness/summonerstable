@@ -307,7 +307,6 @@ void offsetCandleTexturesToMatchBurnLevels(Game* game) {
 }
 
 void endTurn(Game* game) {
-	summonDemon(game);
 	for (int i = 0; i < game->attacks.size(); i++) {
 		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
 			// do the thing where we decrease the stack's candle size...

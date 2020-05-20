@@ -154,8 +154,6 @@ struct Game {
 	std::vector<GLfloat> Buffer_circleTextureOffsetData;
 	std::vector<GLfloat> Buffer_circleTintValueData;
 	std::vector<GLfloat> Buffer_circleScaleValueData;
-
-	
 	
 	bool BufferRefreshFlag_numbersTextureOffsetData;
 	
@@ -174,3 +172,11 @@ struct Game {
 
 	SoundState soundState;
 };
+
+void deleteCard(Game* game, CardReference cardReference) {
+	if (cardReference.cardIndex < game->cards.size() && cardReference.generation == game->cards[cardReference.cardIndex].generation) {
+		Card* card = &game->cards[cardReference.cardIndex];
+		card->deleted = true;
+		game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData] = -3000;
+	}
+}
