@@ -59,6 +59,8 @@ void initSpells(Game* game) {
 		Suit::EYE,
 	};
 
+	summonDeamon.type = SpellType::SUMMON_SPELL;
+
 	game->spells.push_back(summonDeamon);
 
 	Spell scribeFlesh;
@@ -83,6 +85,8 @@ void initSpells(Game* game) {
 		Suit::FLESH
 	};
 
+	scribeFlesh.type = SpellType::FLESH_SPELL;
+
 	game->spells.push_back(scribeFlesh);
 
 	Spell meltBone;
@@ -106,6 +110,8 @@ void initSpells(Game* game) {
 		Suit::BONE,
 		Suit::BONE
 	};
+
+	meltBone.type = SpellType::BONE_SPELL;
 
 	game->spells.push_back(meltBone);
 }

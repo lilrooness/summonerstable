@@ -47,6 +47,7 @@ InstancedSpriteMeshMaterial2D attackMeshMaterial;
 
 SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
+SpriteMaterial spritePopupMaterial;
 
 
 glm::mat4 proj;
@@ -133,6 +134,19 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		GLfloat spellPopupVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			2.0f, 0.0f, 0.0f,
+			2.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			//Texture Coordinates
+			0.0f, SPELL_POPUP_SPRITE_HEIGHT,
+			SPELL_POPUP_SPRITE_WIDTH, SPELL_POPUP_SPRITE_HEIGHT,
+			SPELL_POPUP_SPRITE_WIDTH, 0.0f,
+			0.0f, 0.0f
+		};
+
 		//0.0625f = 1/64
 		GLfloat summonCircleVertexData[] = {
 			//Vertex Coordinates
@@ -174,6 +188,13 @@ bool initGL(Game *game) {
 			0.03125f, 0.0f,
 			0.0f, 0.0f
 		};
+
+		initSpriteMaterial(spellPopupVertexData, 20,
+			game->spellPopupSpriteClass.Buffer_tintValueData,
+			game->spellPopupSpriteClass.Buffer_scaleValueData,
+			game->spellPopupSpriteClass.Buffer_vertexOffsetData,
+			game->spellPopupSpriteClass.Buffer_textureOffsetData,
+			&game->spellPopupSpriteClass.material);
 
 		initSpriteMaterial(cardVertexData, 20,
 			game->cardSpriteClass.Buffer_tintValueData,
@@ -246,16 +267,18 @@ void render_fun(Game *game) {
 	glBindVertexArray(game->spellSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
 
-	//glBindTexture(GL_TEXTURE_2D, cardTexture);
 	glBindVertexArray(game->cardSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->cardSpriteClass.Buffer_vertexOffsetData.size() / 3);
+
+	glBindVertexArray(game->spellPopupSpriteClass.material.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellPopups.size());
 
 	glUseProgram(gCandelProgramID);
 	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
-	glBindTexture(GL_TEXTURE_2D, candelTexture);
+	//glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
 	
@@ -445,6 +468,26 @@ int main( int argc, char* args[] )
 		if (game.spellSpriteClass.BufferRefreshFlag_scaleValueData) {
 			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellSpriteClass.material.BufferHandleInstanced_scaleData, game.spellSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
 			game.spellSpriteClass.BufferRefreshFlag_tintValueData = false;
+		}
+
+		if (game.spellPopupSpriteClass.BufferRefreshFlag_scaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellPopupSpriteClass.material.BufferHandleInstanced_scaleData, game.spellPopupSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			game.spellPopupSpriteClass.BufferRefreshFlag_scaleValueData = false;
+		}
+
+		if (game.spellPopupSpriteClass.BufferRefreshFlag_tintValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellPopupSpriteClass.material.BufferHandleInstanced_tintData, game.spellPopupSpriteClass.Buffer_tintValueData, GL_STATIC_DRAW);
+			game.spellPopupSpriteClass.BufferRefreshFlag_tintValueData = false;
+		}
+
+		if (game.spellPopupSpriteClass.BufferRefreshFlag_textureOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellPopupSpriteClass.material.BufferHandle_textureOffsetData, game.spellPopupSpriteClass.Buffer_textureOffsetData, GL_STATIC_DRAW);
+			game.spellPopupSpriteClass.BufferRefreshFlag_textureOffsetData = false;
+		}
+
+		if (game.spellPopupSpriteClass.BufferRefreshFlag_vertexOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.spellPopupSpriteClass.material.BufferHandle_vertexOffsetData, game.spellPopupSpriteClass.Buffer_vertexOffsetData, GL_STATIC_DRAW);
+			game.spellPopupSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
 		}
 
 		render_fun(&game);

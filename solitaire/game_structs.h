@@ -10,6 +10,10 @@
 
 const float DEFUALT_MODEL_SCALE = 256.0f;
 
+const float SPELL_POPUP_SPRITE_ROW = 1.0f / 16.0f * 4.0f;
+const float SPELL_POPUP_SPRITE_WIDTH = (1.0f / 16.0f) * 2.0f;
+const float SPELL_POPUP_SPRITE_HEIGHT = (1.0f / 16.0f);
+
 const float CARD_SPRITE_ROW = 1.0f / 16.0f * 5.0f;
 const float CARD_SPRITE_HEIGHT = 1.0f / 16.0f;
 const float CARD_SPRITE_WIDTH = 0.5f / 16.0f;
@@ -29,6 +33,8 @@ const float SUMMON_CIRCLE_SPRITE_SIZE = 0.0625f;
 const float SUMMON_CIRCLE_ROW = 0.0625f * 7.0f;
 
 enum Suit { EYE, BONE, FLESH, BLOOD, HAIR };
+
+enum SpellType {SUMMON_SPELL, FLESH_SPELL, BONE_SPELL};
 
 enum CardAnimationType { SCALE };
 
@@ -57,9 +63,11 @@ struct CardAnimation {
 };
 
 struct Spell {
+	SpellType type;
 	std::vector<Suit> requirements;
 	void (*castSpell)(Game* game);
 	bool mouseHovering = false;
+	IndexReference spellPopupReference;
 	Sprite sprite;
 };
 
@@ -69,6 +77,12 @@ struct Card {
 	bool deleted;
 	int generation;
 	bool mouseIsHovering{ false };
+	Sprite sprite;
+};
+
+struct SpellPopup {
+	int generation;
+	bool showing;
 	Sprite sprite;
 };
 
@@ -119,11 +133,13 @@ struct Game {
 	std::vector <Candle> candles;
 	std::vector<Attack> attacks;
 	std::vector <Spell> spells;
+	std::vector <SpellPopup> spellPopups;
 
 	int handLimit;
 
 	SpriteClass cardSpriteClass;
 	SpriteClass spellSpriteClass;
+	SpriteClass spellPopupSpriteClass;
 
 	std::vector<GLfloat> Buffer_attacksVertexOffsetData;
 	std::vector<GLfloat> Buffer_attacksTextureOffsetData;
