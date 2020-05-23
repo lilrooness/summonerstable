@@ -211,10 +211,10 @@ bool initGL(Game *game) {
 			&summonCircleSpriteMaterial);
 
 		initSpriteMaterial(AttacksVertexData, 20,
-			game->Buffer_attacksTintValueData,
-			game->Buffer_attacksScaleValueData,
-			game->Buffer_attacksVertexOffsetData,
-			game->Buffer_attacksTextureOffsetData,
+			game->attacksSpriteClass.Buffer_tintValueData,
+			game->attacksSpriteClass.Buffer_scaleValueData,
+			game->attacksSpriteClass.Buffer_vertexOffsetData,
+			game->attacksSpriteClass.Buffer_textureOffsetData,
 			&attackSpriteMaterial);
 
 		initSpriteMaterial(spellsVertexData, 20,
@@ -262,7 +262,7 @@ void render_fun(Game *game) {
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_circleVertexOffsetData.size() / 3);
 
 	glBindVertexArray(attackSpriteMaterial.BufferHandle_VAO);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_attacksVertexOffsetData.size() / 3);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->attacksSpriteClass.Buffer_vertexOffsetData.size() / 3);
 	
 	glBindVertexArray(game->spellSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
@@ -278,7 +278,6 @@ void render_fun(Game *game) {
 	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
-	//glBindTexture(GL_TEXTURE_2D, candelTexture);
 	glBindVertexArray(candelsMeshMaterial.vao);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
 	
@@ -445,19 +444,19 @@ int main( int argc, char* args[] )
 			game.cardSpriteClass.BufferRefreshFlag_tintValueData;
 		}
 
-		if (game.BufferRefreshFlag_attacksVertexOffsetData) {
-			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_vertexOffsetData, game.Buffer_attacksVertexOffsetData, GL_STATIC_DRAW);
-			game.BufferRefreshFlag_attacksVertexOffsetData = false;
+		if (game.attacksSpriteClass.BufferRefreshFlag_vertexOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_vertexOffsetData, game.attacksSpriteClass.Buffer_vertexOffsetData, GL_STATIC_DRAW);
+			game.attacksSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
 		}
 
-		if (game.BufferRefreshFlag_attacksTextureOffsetData) {
-			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_textureOffsetData, game.Buffer_attacksTextureOffsetData, GL_STATIC_DRAW);
-			game.BufferRefreshFlag_attacksTextureOffsetData = false;
+		if (game.attacksSpriteClass.BufferRefreshFlag_textureOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandle_textureOffsetData, game.attacksSpriteClass.Buffer_textureOffsetData, GL_STATIC_DRAW);
+			game.attacksSpriteClass.BufferRefreshFlag_textureOffsetData = false;
 		}
 
-		if (game.BufferRefreshFlag_attacksScaleValueData) {
-			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_scaleData, game.Buffer_attacksScaleValueData, GL_STATIC_DRAW);
-			game.BufferRefreshFlag_attacksScaleValueData = false;
+		if (game.attacksSpriteClass.BufferRefreshFlag_scaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_scaleData, game.attacksSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			game.attacksSpriteClass.BufferRefreshFlag_scaleValueData = false;
 		}
 
 		if (game.BufferRefreshFlag_circleTintValueData) {

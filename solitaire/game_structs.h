@@ -28,6 +28,7 @@ const float SPELL_SPRITE_WIDTH = 1.0f / 16.0f;
 
 const float ATTACK_SPRITE_SIZE = 0.03125f;
 const float ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 7;
+const float NULL_ATTACK_SPRITE_ROW = ATTACK_SPRITE_SIZE * 31;
 
 const float SUMMON_CIRCLE_SPRITE_SIZE = 0.0625f;
 const float SUMMON_CIRCLE_ROW = 0.0625f * 7.0f;
@@ -88,14 +89,12 @@ struct SpellPopup {
 
 struct Attack {
 	int number;
+	int effectiveNumber;
 	bool deleted;
 	int generation;
 	int stackIndex;
 
-	int BufferIndex_attackTextureOffsetData;
-	int BufferIndex_attackVertexOffsetData;
-	int BufferIndex_attackScaleValueData;
-	int BufferIndex_attackTintValueData;
+	Sprite sprite;
 };
 
 struct Candle {
@@ -140,11 +139,7 @@ struct Game {
 	SpriteClass cardSpriteClass;
 	SpriteClass spellSpriteClass;
 	SpriteClass spellPopupSpriteClass;
-
-	std::vector<GLfloat> Buffer_attacksVertexOffsetData;
-	std::vector<GLfloat> Buffer_attacksTextureOffsetData;
-	std::vector<GLfloat> Buffer_attacksScaleValueData;
-	std::vector<GLfloat> Buffer_attacksTintValueData;
+	SpriteClass attacksSpriteClass;
 
 	std::vector<GLfloat> Buffer_candlesVertexOffsetData;
 	std::vector<GLfloat> Buffer_candlesTextureOffsetData;
@@ -160,10 +155,6 @@ struct Game {
 	bool BufferRefreshFlag_candlesVertexOffsetData;
 	bool BufferRefreshFlag_candlesTextureOffsetData;
 	bool BufferRefreshFlag_candlesStateData;
-	
-	bool BufferRefreshFlag_attacksVertexOffsetData;
-	bool BufferRefreshFlag_attacksTextureOffsetData;
-	bool BufferRefreshFlag_attacksScaleValueData;
 	
 	bool BufferRefreshFlag_circleStateData;
 	bool BufferRefreshFlag_circleVertexOffsetData;

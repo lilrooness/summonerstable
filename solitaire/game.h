@@ -33,6 +33,27 @@ void addAttacks(Game *game);
 IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex);
 int createNewAttack(Game* game, int number, float x, float y, int stackIndex);
 void initSpells(Game *game);
+void updateAttackEffectiveNumbers(Game* game);
+
+void updateAttackEffectiveNumbers(Game* game) {
+	for (Attack& attack : game->attacks) {
+		int effectiveNumber = attack.number - game->stacks[attack.stackIndex].orderedCardReferences.size();
+		attack.effectiveNumber = std::max(0, effectiveNumber);
+		if (attack.effectiveNumber == 0) {
+			game->attacksSpriteClass.Buffer_textureOffsetData[attack.sprite.BufferIndex_textureOffsetData] = 0.0f;
+			game->attacksSpriteClass.Buffer_textureOffsetData[attack.sprite.BufferIndex_textureOffsetData + 1] = NULL_ATTACK_SPRITE_ROW;
+		}
+		else {
+			game->attacksSpriteClass.Buffer_textureOffsetData[attack.sprite.BufferIndex_textureOffsetData]
+				= ATTACK_SPRITE_SIZE * (attack.effectiveNumber - 1);
+
+			game->attacksSpriteClass.Buffer_textureOffsetData[attack.sprite.BufferIndex_textureOffsetData + 1] = ATTACK_SPRITE_ROW;
+		}
+		
+	}
+
+	game->attacksSpriteClass.BufferRefreshFlag_textureOffsetData = true;
+}
 
 void initSpells(Game* game) {
 	Spell summonDeamon;
@@ -143,17 +164,17 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 			game->attacks[i].generation++;
 			game->attacks[i].number = number;
 			game->attacks[i].stackIndex = stackIndex;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 2] = 0.0f;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 2] = 0.0f;
 
-			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = ATTACK_SPRITE_SIZE * (number - 1);
-			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData + 1] = ATTACK_SPRITE_ROW;
+			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = ATTACK_SPRITE_SIZE * (number - 1);
+			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData + 1] = ATTACK_SPRITE_ROW;
 
-			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
-			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData] = 1.0f;
-			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData + 1] = 1.0f;
-			game->Buffer_attacksTintValueData[game->attacks[i].BufferIndex_attackTintValueData + 2] = 1.0f;
+			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
+			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData] = 1.0f;
+			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData + 1] = 1.0f;
+			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData + 2] = 1.0f;
 
 			IndexReference reference;
 			reference.generation = game->attacks[i].generation;
@@ -193,22 +214,22 @@ int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
 	attack.stackIndex = stackIndex;
 	attack.deleted = false;
 	attack.generation = 0;
-	attack.BufferIndex_attackTextureOffsetData = game->Buffer_attacksTextureOffsetData.size();
-	attack.BufferIndex_attackVertexOffsetData = game->Buffer_attacksVertexOffsetData.size();
-	attack.BufferIndex_attackScaleValueData = game->Buffer_attacksScaleValueData.size();
-	attack.BufferIndex_attackTintValueData = game->Buffer_attacksTintValueData.size();
+	attack.sprite.BufferIndex_textureOffsetData = game->attacksSpriteClass.Buffer_textureOffsetData.size();
+	attack.sprite.BufferIndex_vertexOffsetData = game->attacksSpriteClass.Buffer_vertexOffsetData.size();
+	attack.sprite.BufferIndex_scaleValueData = game->attacksSpriteClass.Buffer_scaleValueData.size();
+	attack.sprite.BufferIndex_tintValueData = game->attacksSpriteClass.Buffer_tintValueData.size();
 
-	game->Buffer_attacksTextureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
-	game->Buffer_attacksTextureOffsetData.push_back(ATTACK_SPRITE_ROW);
+	game->attacksSpriteClass.Buffer_textureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
+	game->attacksSpriteClass.Buffer_textureOffsetData.push_back(ATTACK_SPRITE_ROW);
 	
-	game->Buffer_attacksVertexOffsetData.push_back(x);
-	game->Buffer_attacksVertexOffsetData.push_back(y);
-	game->Buffer_attacksVertexOffsetData.push_back(0.0f);
+	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(x);
+	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(y);
+	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(0.0f);
 
-	game->Buffer_attacksScaleValueData.push_back(1.0f);
-	game->Buffer_attacksTintValueData.push_back(1.0f);
-	game->Buffer_attacksTintValueData.push_back(1.0f);
-	game->Buffer_attacksTintValueData.push_back(1.0f);
+	game->attacksSpriteClass.Buffer_scaleValueData.push_back(1.0f);
+	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
 
 	int attackIndex = game->attacks.size();
 	game->attacks.push_back(attack);
@@ -237,14 +258,14 @@ IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y, 
 			game->attacks[i].number = number;
 			game->attacks[i].stackIndex = stackIndex;
 			
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = x;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = y;
-			game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 2] = 0.0f;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 2] = 0.0f;
 
-			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = (number - 1) * ATTACK_SPRITE_SIZE;
-			game->Buffer_attacksTextureOffsetData[game->attacks[i].BufferIndex_attackTextureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
+			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = (number - 1) * ATTACK_SPRITE_SIZE;
+			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
 		
-			game->Buffer_attacksScaleValueData[game->attacks[i].BufferIndex_attackScaleValueData] = 1.0f;
+			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
 			
 			IndexReference reference;
 			reference.generation = game->attacks[i].generation;
@@ -314,13 +335,13 @@ void endTurn(Game* game) {
 			offsetCandleTexturesToMatchBurnLevels(game);
 		}
 		game->attacks[i].deleted = true;
-		game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData] = -300;
-		game->Buffer_attacksVertexOffsetData[game->attacks[i].BufferIndex_attackVertexOffsetData + 1] = -300;
+		game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = -300;
+		game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = -300;
 	}
 	addAttacks(game);
-	game->BufferRefreshFlag_attacksTextureOffsetData = true;
-	game->BufferRefreshFlag_attacksVertexOffsetData = true;
-	game->BufferRefreshFlag_attacksScaleValueData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_textureOffsetData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_scaleValueData = true;
 	
 
 	for (Stack& stack : game->stacks) {
@@ -534,6 +555,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 	pruneHandCardReferences(game);
 
 	resetCardsAtStackPositions(game);
+	updateAttackEffectiveNumbers(game);
 }
 
 bool cardFitsOnStack(Game *game, const Stack& stack, const CardReference& cardReference) {
