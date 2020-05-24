@@ -194,6 +194,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 
 void addAttacks(Game* game) {
 	int numberOfAttacks = (rand() % 4) + 1;
+	cout << "Adding " << numberOfAttacks << " attacks" << endl;
 	float startingPosition = 265.0f;
 	float gap = 350.0f;
 	std::vector<int> availablePositions{ 0,1,2,3,4 };
@@ -266,6 +267,10 @@ IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y, 
 			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
 		
 			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
+
+			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData] = 1.0f;
+			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+1] = 1.0f;
+			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+2] = 1.0f;
 			
 			IndexReference reference;
 			reference.generation = game->attacks[i].generation;
@@ -328,45 +333,50 @@ void offsetCandleTexturesToMatchBurnLevels(Game* game) {
 }
 
 void endTurn(Game* game) {
-	for (int i = 0; i < game->attacks.size(); i++) {
-		if (!game->attacks[i].deleted && game->attacks[i].number > game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size()) {
-			// do the thing where we decrease the stack's candle size...
-			game->candles[game->attacks[i].stackIndex].burnLevel += game->attacks[i].number - game->stacks[game->attacks[i].stackIndex].orderedCardReferences.size();
-			offsetCandleTexturesToMatchBurnLevels(game);
-		}
-		game->attacks[i].deleted = true;
-		game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = -300;
-		game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = -300;
-	}
-	addAttacks(game);
-	game->attacksSpriteClass.BufferRefreshFlag_textureOffsetData = true;
-	game->attacksSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
-	game->attacksSpriteClass.BufferRefreshFlag_scaleValueData = true;
-	
+	cout << "turn: " << game->turn <<endl;
+	//For each attack, burn cards and melt candles
+	for (Attack& attack : game->attacks) {
+		if (!attack.deleted) {
+			int cardsToRemove = std::min((int)game->stacks[attack.stackIndex].orderedCardReferences.size(), attack.number);
+			Stack* stack = &game->stacks[attack.stackIndex];
 
-	for (Stack& stack : game->stacks) {
-		for (const CardReference& cardReference : stack.orderedCardReferences) {
-			if (validCardReference(game, cardReference)) {
-				markCardAsDeleted(game, cardReference);
+			cout << "stack: " << attack.stackIndex << " Effective Number: " << attack.effectiveNumber << " cards to delete: " << cardsToRemove << endl;
+
+			int deletedCards = 0;
+			while (deletedCards < cardsToRemove) {
+				//delete cards from game->cards, and then after for loop prune the references from the stacks
+				deleteCard(game, stack->orderedCardReferences[deletedCards++]);
 			}
+
+			game->candles[attack.stackIndex].burnLevel += attack.effectiveNumber;
+			offsetCandleTexturesToMatchBurnLevels(game);
+			attack.deleted = true;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[attack.sprite.BufferIndex_vertexOffsetData] = -300;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[attack.sprite.BufferIndex_vertexOffsetData + 1] = -300;
 		}
 	}
 
 	pruneStacksCardReferences(game);
 
-	int cardsToDeal = 4;
-
-	for (int i = 0; i < cardsToDeal; i++) {
-		Suit cardSuit = static_cast<Suit>(rand() % 5);
-		int number = (rand() % 10) + 1;
-		CardReference cardReference = reuseOrCreateNewCard(game, cardSuit, number, 0.0f, 0.0f);
-		game->stacks[i].orderedCardReferences.push_back(cardReference);
+	//deal new cards
+	for (int i = 0; i < game->stacks.size(); i++) {
+		if (game->stacks[i].orderedCardReferences.size() == 0) {
+			Suit cardSuit = static_cast<Suit>(rand() % 5);
+			int number = (rand() % 5) + 1;
+			CardReference cardReference = reuseOrCreateNewCard(game, cardSuit, number, 0.0f, 0.0f);
+			game->stacks[i].orderedCardReferences.push_back(cardReference);
+		}
 	}
-
 	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
 	game->cardSpriteClass.BufferRefreshFlag_scaleValueData = true;
 	game->cardSpriteClass.BufferRefreshFlag_tintValueData = true;
+
+	addAttacks(game);
+	game->attacksSpriteClass.BufferRefreshFlag_textureOffsetData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_scaleValueData = true;
+	game->attacksSpriteClass.BufferRefreshFlag_tintValueData = true;
 
 	game->turnEndedByPlayer = false;
 	game->turn++;
@@ -378,6 +388,8 @@ void endTurn(Game* game) {
 		track = 0;
 	}
 	playMusic(&game->soundState, track);
+
+	cout << endl;
 }
 
 int countRemainingCandles(Game* game) {
@@ -582,9 +594,11 @@ void resetCardsAtStackPositions(Game* game) {
 			bool cardGrabbed = cardReferencesMatch(stack.orderedCardReferences[i], game->grabbedCardReference);
 			if (!cardGrabbed) {
 				Card* card = getCardByCardReference(game, stack.orderedCardReferences[i]);
-				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData] = stack.x;
-				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 1] = stack.y - (i * 10);
-				game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 2] = (i+1) * zIncrement;
+				if (!validScaleAnimationReference(game->cardSpriteClass, card->sprite.scaleAnimationReference)) {
+					game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData] = stack.x;
+					game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 1] = stack.y - (i * 10);
+					game->cardSpriteClass.Buffer_vertexOffsetData[card->sprite.BufferIndex_vertexOffsetData + 2] = (i + 1) * zIncrement;
+				}
 			}
 		}
 	}

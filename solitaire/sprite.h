@@ -47,6 +47,12 @@ struct SpriteClass {
 	float defaultScale{ 1.0f };
 };
 
+bool validScaleAnimationReference(SpriteClass& spriteClass, IndexReference& reference) {
+	return reference.index < spriteClass.scaleAnimations.size() 
+		&& spriteClass.scaleAnimations[reference.index].spriteGeneration == reference.generation 
+		&& !spriteClass.scaleAnimations[reference.index].flaotAnimation.done;
+}
+
 template<typename T>
 void resolveScaleAnimations(SpriteClass& spriteClass, std::vector<T> spriteObjects, float gameTime) {
 	for (int i = 0; i < spriteClass.scaleAnimations.size(); i++) {
