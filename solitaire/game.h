@@ -194,7 +194,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 }
 
 void addAttacks(Game* game) {
-	int numberOfAttacks = (rand() % 4) + 1;
+	int numberOfAttacks = (rand() % game->attackLimit) + 1;
 	cout << "Adding " << numberOfAttacks << " attacks" << endl;
 	float startingPosition = 265.0f;
 	float gap = 350.0f;
@@ -204,7 +204,7 @@ void addAttacks(Game* game) {
 		int positionIndex = availablePositions.size() == 1? 0: rand() % availablePositions.size();
 		int position = availablePositions[positionIndex];
 		availablePositions.erase(availablePositions.begin() + positionIndex);
-		int attackValue = (rand() % 4) + 1;
+		int attackValue = (rand() % game->attackValueLimit) + 1;
 		//cout << "new attack. value: " << attackValue << " position: " << position << endl;
 		// here we uise the position as the stack index, as they represent the same thing?
 		auto ref = reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1250.0f, position);
@@ -424,6 +424,8 @@ void init_game(Game *game) {
 	game->turn = 1;
 	srand(time(NULL));
 	game->gameTime = 0.0f;
+	game->attackLimit = 1;
+	game->attackValueLimit = 3;
 
 	game->spellSpriteClass.defaultScale = 0.5;
 	//table stacks

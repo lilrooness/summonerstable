@@ -125,6 +125,11 @@ struct Game {
 
 	bool turnEndedByPlayer = false;
 
+	int handLimit;
+
+	int attackValueLimit;
+	int attackLimit;
+
 	CardReference grabbedCardReference;
 	std::vector<Card> cards;
 	std::vector<Stack> stacks;
@@ -133,8 +138,6 @@ struct Game {
 	std::vector<Attack> attacks;
 	std::vector <Spell> spells;
 	std::vector <SpellPopup> spellPopups;
-
-	int handLimit;
 
 	SpriteClass cardSpriteClass;
 	SpriteClass spellSpriteClass;
