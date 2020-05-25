@@ -197,10 +197,10 @@ void addAttacks(Game* game) {
 	cout << "Adding " << numberOfAttacks << " attacks" << endl;
 	float startingPosition = 265.0f;
 	float gap = 350.0f;
-	std::vector<int> availablePositions{ 0,1,2,3,4 };
+	std::vector<int> availablePositions{ 0,1,2,3 };
 
 	for (int i = 0; i < numberOfAttacks; i++) {
-		int positionIndex = rand() % (availablePositions.size() - 1);
+		int positionIndex = availablePositions.size() == 1? 0: rand() % (availablePositions.size());
 		int position = availablePositions[positionIndex];
 		availablePositions.erase(availablePositions.begin() + positionIndex);
 		int attackValue = (rand() % 4) + 1;
