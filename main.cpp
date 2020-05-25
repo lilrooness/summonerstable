@@ -262,7 +262,7 @@ void render_fun(Game *game) {
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_circleVertexOffsetData.size() / 3);
 
 	glBindVertexArray(attackSpriteMaterial.BufferHandle_VAO);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->attacksSpriteClass.Buffer_vertexOffsetData.size() / 3);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->attacksSpriteClass.Buffer_textureOffsetData.size() / 2);
 	
 	glBindVertexArray(game->spellSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellSpriteClass.Buffer_textureOffsetData.size() / 2);
@@ -457,6 +457,10 @@ int main( int argc, char* args[] )
 		if (game.attacksSpriteClass.BufferRefreshFlag_scaleValueData) {
 			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_scaleData, game.attacksSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
 			game.attacksSpriteClass.BufferRefreshFlag_scaleValueData = false;
+		}
+
+		if (game.attacksSpriteClass.BufferRefreshFlag_tintValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, attackSpriteMaterial.BufferHandleInstanced_tintData, game.attacksSpriteClass.Buffer_tintValueData, GL_STATIC_DRAW);
 		}
 
 		if (game.BufferRefreshFlag_circleTintValueData) {

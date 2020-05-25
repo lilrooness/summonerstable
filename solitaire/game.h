@@ -163,6 +163,7 @@ IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int
 			game->attacks[i].deleted = false;
 			game->attacks[i].generation++;
 			game->attacks[i].number = number;
+			game->attacks[i].effectiveNumber = number;
 			game->attacks[i].stackIndex = stackIndex;
 			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
 			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
@@ -200,18 +201,33 @@ void addAttacks(Game* game) {
 	std::vector<int> availablePositions{ 0,1,2,3 };
 
 	for (int i = 0; i < numberOfAttacks; i++) {
-		int positionIndex = availablePositions.size() == 1? 0: rand() % (availablePositions.size());
+		int positionIndex = availablePositions.size() == 1? 0: rand() % availablePositions.size();
 		int position = availablePositions[positionIndex];
 		availablePositions.erase(availablePositions.begin() + positionIndex);
 		int attackValue = (rand() % 4) + 1;
+		//cout << "new attack. value: " << attackValue << " position: " << position << endl;
 		// here we uise the position as the stack index, as they represent the same thing?
-		reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1250.0f, position);
+		auto ref = reuseOrCreateAttack(game, attackValue, startingPosition + gap * position, 1250.0f, position);
+		float xpos = game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[ref.index].sprite.BufferIndex_vertexOffsetData];
+		float ypos = game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[ref.index].sprite.BufferIndex_vertexOffsetData + 1];
+		float zpos = game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[ref.index].sprite.BufferIndex_vertexOffsetData + 2];
+		float scale = game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[ref.index].sprite.BufferIndex_scaleValueData];
+		float tintr = game->attacksSpriteClass.Buffer_tintValueData[game->attacks[ref.index].sprite.BufferIndex_tintValueData];
+		float tintg = game->attacksSpriteClass.Buffer_tintValueData[game->attacks[ref.index].sprite.BufferIndex_tintValueData+1];
+		float tintb = game->attacksSpriteClass.Buffer_tintValueData[game->attacks[ref.index].sprite.BufferIndex_tintValueData+2];
+		float uvx = game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[ref.index].sprite.BufferIndex_textureOffsetData];
+		float uvy = game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[ref.index].sprite.BufferIndex_textureOffsetData + 1];
+		int number = game->attacks[ref.index].number;
+
+		cout << "stack: " << game->attacks[ref.index].stackIndex << " x pos: " << xpos << " ypos: " << ypos << " zpoz: " << zpos << " scale: " << scale << " tintR: " << tintr << " tintG: " << tintg << " tintB: " << tintb << " UVX: " << uvx << " UVY: " << uvy << " number: " << number << endl;
 	}
 }
 
 int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
+	cout << "Creating new attack" << endl;
 	Attack attack;
 	attack.number = number;
+	attack.effectiveNumber = number;
 	attack.stackIndex = stackIndex;
 	attack.deleted = false;
 	attack.generation = 0;
