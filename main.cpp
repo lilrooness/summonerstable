@@ -48,6 +48,7 @@ InstancedSpriteMeshMaterial2D attackMeshMaterial;
 SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
 SpriteMaterial spritePopupMaterial;
+SpriteMaterial dustBowlSpriteMaterial;
 
 
 glm::mat4 proj;
@@ -189,6 +190,27 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		//0.0625f = 1/64
+		GLfloat dustBowlVertexData[] = {
+			//Vertex Coordinates
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			//Texture Coordinates
+			0.0f, 0.0625f,
+			0.0625f, 0.0625f,
+			0.0625f, 0.0f,
+			0.0f, 0.0f
+		};
+
+		initSpriteMaterial(dustBowlVertexData, 20,
+			game->dustBowlSpriteClass.Buffer_tintValueData,
+			game->dustBowlSpriteClass.Buffer_scaleValueData,
+			game->dustBowlSpriteClass.Buffer_vertexOffsetData,
+			game->dustBowlSpriteClass.Buffer_textureOffsetData,
+			&game->dustBowlSpriteClass.material);
+
 		initSpriteMaterial(spellPopupVertexData, 20,
 			game->spellPopupSpriteClass.Buffer_tintValueData,
 			game->spellPopupSpriteClass.Buffer_scaleValueData,
@@ -315,7 +337,7 @@ int main( int argc, char* args[] )
 		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
 		//Create window
-		window = SDL_CreateWindow( "Summoners Tower", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960/*NULL, NULL*/, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/);
+		window = SDL_CreateWindow( "Summoners Tower", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280/2, 960/2/*NULL, NULL*/, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/);
 		SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 		if( window == NULL )
 		{

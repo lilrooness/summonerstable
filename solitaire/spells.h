@@ -10,8 +10,7 @@
 void showSpellPopup(Game* game, Spell& spell);
 void createNewSpellPopup(Game* game, float x, float y, Spell& spell);
 void hideSpellPopup(Game* game, const Spell& spell);
-bool canCastSpell(Game* game, const Spell& spell);
-void castSpell(Game* game, const Spell& spell);
+void castSpell(Game* game, Spell& spell);
 
 void tickSpells(Game* game) {
 
@@ -141,42 +140,29 @@ void summonDemon(Game* game) {
 	game->summonLevel++;
 }
 
-void castSpell(Game* game, const Spell& spell) {
-	if (canCastSpell(game, spell)) {
-		if (spell.type == SpellType::SUMMON_SPELL) {
+void castSpell(Game* game, Spell& spell) {
+	if (spell.type == SpellType::SUMMON_SPELL && !spell.isCasting) {
 
-			//delete cards used for spell
-			for (Suit suit : spell.requirements) {
-				auto it = std::find_if(game->handCards.begin(), game->handCards.end(), [game, suit](CardReference ref) {
-					return ref.cardIndex < game->cards.size() && game->cards[ref.cardIndex].suit == suit;
-					});
-
-				if (it != game->handCards.end()) {
-					deleteCard(game, *it);
-					game->handCards.erase(it);
-				}
-			}
-			summonDemon(game);
+		for (Attack& attack : game->attacks) {
+			attack.deleted = true;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[attack.sprite.BufferIndex_vertexOffsetData] = -300;
+			game->attacksSpriteClass.Buffer_vertexOffsetData[attack.sprite.BufferIndex_vertexOffsetData + 1] = -300;
 		}
+
+		spell.isCasting = true;
+
+		float startingPosition = 265.0f;
+		float gap = 350.0f;
+
+		for (int i = 0; i < 4; i++) {
+			reuseOrCreateAttack(game, 3, startingPosition + gap * i, 1250.0f, i);
+		}
+
+		game->attacksSpriteClass.BufferRefreshFlag_scaleValueData = true;
+		game->attacksSpriteClass.BufferRefreshFlag_tintValueData = true;
+		game->attacksSpriteClass.BufferRefreshFlag_textureOffsetData = true;
+		game->attacksSpriteClass.BufferRefreshFlag_vertexOffsetData = true;
+		
+		summonDemon(game);
 	}
-}
-
-bool canCastSpell(Game* game, const Spell& spell) {
-
-	std::vector<CardReference> tempHand = game->handCards;
-
-	for (Suit suit : spell.requirements) {
-		auto it = std::find_if(tempHand.begin(), tempHand.end(), [game, suit](CardReference ref) {
-			return ref.cardIndex < game->cards.size() && game->cards[ref.cardIndex].suit == suit;
-		});
-
-		if (it != tempHand.end()) {
-			tempHand.erase(it);
-		}
-		else {
-			return false;
-		}
-	}
-
-	return true;
 }

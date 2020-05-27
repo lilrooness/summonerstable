@@ -144,6 +144,7 @@
     <ClCompile Include="..\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dust_bowl.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="animation.h" />
     <ClInclude Include="game_structs.h" />

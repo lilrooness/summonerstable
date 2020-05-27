@@ -56,6 +56,9 @@
     <ClInclude Include="sprite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dust_bowl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.fs">

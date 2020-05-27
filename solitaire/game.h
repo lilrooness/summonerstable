@@ -72,14 +72,6 @@ void initSpells(Game* game) {
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(900.0f);
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(-1.0f);
 
-	summonDeamon.requirements = std::vector<Suit>{
-		Suit::BLOOD,
-		Suit::BONE,
-		Suit::FLESH,
-		Suit::HAIR,
-		Suit::EYE,
-	};
-
 	summonDeamon.type = SpellType::SUMMON_SPELL;
 
 	game->spells.push_back(summonDeamon);
@@ -100,12 +92,6 @@ void initSpells(Game* game) {
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(760.0f);
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(-1.0f);
 
-	scribeFlesh.requirements = std::vector<Suit>{
-		Suit::FLESH,
-		Suit::FLESH,
-		Suit::FLESH
-	};
-
 	scribeFlesh.type = SpellType::FLESH_SPELL;
 
 	game->spells.push_back(scribeFlesh);
@@ -125,12 +111,6 @@ void initSpells(Game* game) {
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(5.0f);
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(620.0f);
 	game->spellSpriteClass.Buffer_vertexOffsetData.push_back(-1.0f);
-
-	meltBone.requirements = std::vector<Suit>{
-		Suit::BONE,
-		Suit::BONE,
-		Suit::BONE
-	};
 
 	meltBone.type = SpellType::BONE_SPELL;
 
@@ -157,41 +137,6 @@ void initCircle(Game* game) {
 	}
 }
 
-IndexReference reuseOrCreateAttack(Game* game, int number, float x, float y, int stackIndex) {
-	for (int i = 0; i < game->attacks.size(); i++) {
-		if (game->attacks[i].deleted) {
-			game->attacks[i].deleted = false;
-			game->attacks[i].generation++;
-			game->attacks[i].number = number;
-			game->attacks[i].effectiveNumber = number;
-			game->attacks[i].stackIndex = stackIndex;
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 2] = 0.0f;
-
-			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = ATTACK_SPRITE_SIZE * (number - 1);
-			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData + 1] = ATTACK_SPRITE_ROW;
-
-			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
-			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData] = 1.0f;
-			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData + 1] = 1.0f;
-			game->attacksSpriteClass.Buffer_tintValueData [game->attacks[i].sprite.BufferIndex_tintValueData + 2] = 1.0f;
-
-			IndexReference reference;
-			reference.generation = game->attacks[i].generation;
-			reference.index = i;
-
-			return reference;
-		}
-	}
-
-	int newAttackIndex = createNewAttack(game, number, x, y, stackIndex);
-	IndexReference reference;
-	reference.index = newAttackIndex;
-	reference.generation = 0;
-
-	return reference;
-}
 
 void addAttacks(Game* game) {
 	int numberOfAttacks = (rand() % game->attackLimit) + 1;
@@ -223,37 +168,6 @@ void addAttacks(Game* game) {
 	}
 }
 
-int createNewAttack(Game* game, int number, float x, float y, int stackIndex) {
-	cout << "Creating new attack" << endl;
-	Attack attack;
-	attack.number = number;
-	attack.effectiveNumber = number;
-	attack.stackIndex = stackIndex;
-	attack.deleted = false;
-	attack.generation = 0;
-	attack.sprite.BufferIndex_textureOffsetData = game->attacksSpriteClass.Buffer_textureOffsetData.size();
-	attack.sprite.BufferIndex_vertexOffsetData = game->attacksSpriteClass.Buffer_vertexOffsetData.size();
-	attack.sprite.BufferIndex_scaleValueData = game->attacksSpriteClass.Buffer_scaleValueData.size();
-	attack.sprite.BufferIndex_tintValueData = game->attacksSpriteClass.Buffer_tintValueData.size();
-
-	game->attacksSpriteClass.Buffer_textureOffsetData.push_back((number - 1) * ATTACK_SPRITE_SIZE);
-	game->attacksSpriteClass.Buffer_textureOffsetData.push_back(ATTACK_SPRITE_ROW);
-	
-	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(x);
-	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(y);
-	game->attacksSpriteClass.Buffer_vertexOffsetData.push_back(0.0f);
-
-	game->attacksSpriteClass.Buffer_scaleValueData.push_back(1.0f);
-	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
-	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
-	game->attacksSpriteClass.Buffer_tintValueData.push_back(1.0f);
-
-	int attackIndex = game->attacks.size();
-	game->attacks.push_back(attack);
-
-	return attackIndex;
-}
-
 bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 
 	if (validCardReference(game, cardReference)) {
@@ -267,42 +181,42 @@ bool markCardAsDeleted(Game* game, const CardReference& cardReference) {
 	return false;
 }
 
-IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y, int stackIndex) {
-	for (int i = 0; i < game->attacks.size(); i++) {
-		if (game->attacks[i].deleted) {
-			game->attacks[i].deleted = false;
-			game->attacks[i].generation++;
-			game->attacks[i].number = number;
-			game->attacks[i].stackIndex = stackIndex;
-			
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
-			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 2] = 0.0f;
-
-			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = (number - 1) * ATTACK_SPRITE_SIZE;
-			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
-		
-			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
-
-			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData] = 1.0f;
-			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+1] = 1.0f;
-			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+2] = 1.0f;
-			
-			IndexReference reference;
-			reference.generation = game->attacks[i].generation;
-			reference.index = i;
-
-			return reference;
-		}
-	}
-
-	int index = createNewAttack(game, number, x, y, stackIndex);
-	IndexReference reference;
-	reference.index = index;
-	reference.generation = 0;
-
-	return reference;
-}
+//IndexReference reuseOrCreateNewAttack(Game* game, int number, float x, float y, int stackIndex) {
+//	for (int i = 0; i < game->attacks.size(); i++) {
+//		if (game->attacks[i].deleted) {
+//			game->attacks[i].deleted = false;
+//			game->attacks[i].generation++;
+//			game->attacks[i].number = number;
+//			game->attacks[i].stackIndex = stackIndex;
+//			
+//			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData] = x;
+//			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 1] = y;
+//			game->attacksSpriteClass.Buffer_vertexOffsetData[game->attacks[i].sprite.BufferIndex_vertexOffsetData + 2] = 0.0f;
+//
+//			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = (number - 1) * ATTACK_SPRITE_SIZE;
+//			game->attacksSpriteClass.Buffer_textureOffsetData[game->attacks[i].sprite.BufferIndex_textureOffsetData] = 7.0f * ATTACK_SPRITE_SIZE;
+//		
+//			game->attacksSpriteClass.Buffer_scaleValueData[game->attacks[i].sprite.BufferIndex_scaleValueData] = 1.0f;
+//
+//			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData] = 1.0f;
+//			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+1] = 1.0f;
+//			game->attacksSpriteClass.Buffer_tintValueData[game->attacks[i].sprite.BufferIndex_tintValueData+2] = 1.0f;
+//			
+//			IndexReference reference;
+//			reference.generation = game->attacks[i].generation;
+//			reference.index = i;
+//
+//			return reference;
+//		}
+//	}
+//
+//	int index = createNewAttack(game, number, x, y, stackIndex);
+//	IndexReference reference;
+//	reference.index = index;
+//	reference.generation = 0;
+//
+//	return reference;
+//}
 
 CardReference reuseOrCreateNewCard(Game* game, Suit suit, int number, float x, float y) {
 	for (int i = 0; i < game->cards.size(); i++) {
@@ -349,6 +263,12 @@ void offsetCandleTexturesToMatchBurnLevels(Game* game) {
 }
 
 void endTurn(Game* game) {
+
+	//reset all spells
+	for (Spell& spell : game->spells) {
+		spell.isCasting = false;
+	}
+
 	cout << "turn: " << game->turn <<endl;
 	//For each attack, burn cards and melt candles
 	for (Attack& attack : game->attacks) {
@@ -453,6 +373,16 @@ void init_game(Game *game) {
 	addAttacks(game);
 	initCircle(game);
 	initSpells(game);
+
+	Sprite dustBowlSprite;
+	dustBowlSprite.BufferIndex_scaleValueData = 0;
+	dustBowlSprite.BufferIndex_textureOffsetData = 0;
+	dustBowlSprite.BufferIndex_tintValueData = 0;
+	dustBowlSprite.BufferIndex_vertexOffsetData = 0;
+
+	game->dustBowl.sprite = dustBowlSprite;
+	game->dustBowl.dustRemaining = 100;
+	game->dustBowl.mouseHovering = false;
 
 	game->cardSpriteClass.BufferRefreshFlag_vertexOffsetData = false;
 	game->cardSpriteClass.BufferRefreshFlag_textureOffsetData = false;
