@@ -108,11 +108,10 @@ struct Attack {
 };
 
 struct Candle {
-	int BufferIndex_candleVertexOffsetData;
-	int BufferIndex_candleTextureOffsetData;
-	int BufferIndex_candleStateData;
 
 	int burnLevel;
+
+	Sprite sprite;
 };
 
 struct Stack {
@@ -156,10 +155,7 @@ struct Game {
 	SpriteClass spellPopupSpriteClass;
 	SpriteClass attacksSpriteClass;
 	SpriteClass dustBowlSpriteClass;
-
-	std::vector<GLfloat> Buffer_candlesVertexOffsetData;
-	std::vector<GLfloat> Buffer_candlesTextureOffsetData;
-	std::vector<GLfloat> Buffer_candlesStateData;
+	SpriteClass candlesSpriteClass;
 
 	std::vector<GLfloat> Buffer_circleVertexOffsetData;
 	std::vector<GLfloat> Buffer_circleTextureOffsetData;
@@ -167,10 +163,6 @@ struct Game {
 	std::vector<GLfloat> Buffer_circleScaleValueData;
 	
 	bool BufferRefreshFlag_numbersTextureOffsetData;
-	
-	bool BufferRefreshFlag_candlesVertexOffsetData;
-	bool BufferRefreshFlag_candlesTextureOffsetData;
-	bool BufferRefreshFlag_candlesStateData;
 	
 	bool BufferRefreshFlag_circleStateData;
 	bool BufferRefreshFlag_circleVertexOffsetData;

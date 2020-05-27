@@ -42,13 +42,11 @@ const GLint PROJECTION_LOCATION = 2;
 
 unsigned int candelTexture;
 
-InstancedSpriteMeshMaterial2D candelsMeshMaterial;
-InstancedSpriteMeshMaterial2D attackMeshMaterial;
-
 SpriteMaterial attackSpriteMaterial;
 SpriteMaterial summonCircleSpriteMaterial;
 SpriteMaterial spritePopupMaterial;
 SpriteMaterial dustBowlSpriteMaterial;
+SpriteMaterial candleSpriteMaterial;
 
 
 glm::mat4 proj;
@@ -204,6 +202,14 @@ bool initGL(Game *game) {
 			0.0f, 0.0f
 		};
 
+		initSpriteMaterial(candelVertexData, 20,
+			game->candlesSpriteClass.Buffer_tintValueData,
+			game->candlesSpriteClass.Buffer_scaleValueData,
+			game->candlesSpriteClass.Buffer_vertexOffsetData,
+			game->candlesSpriteClass.Buffer_textureOffsetData,
+			&game->candlesSpriteClass.material
+		);
+
 		initSpriteMaterial(dustBowlVertexData, 20,
 			game->dustBowlSpriteClass.Buffer_tintValueData,
 			game->dustBowlSpriteClass.Buffer_scaleValueData,
@@ -245,25 +251,6 @@ bool initGL(Game *game) {
 			game->spellSpriteClass.Buffer_vertexOffsetData,
 			game->spellSpriteClass.Buffer_textureOffsetData,
 			&game->spellSpriteClass.material);
-
-		InstancedSpriteShaderAttribute_Float candleOnShaderAttrib;
-		candleOnShaderAttrib.id = 0;
-		candleOnShaderAttrib.name = "candleOn";
-		candleOnShaderAttrib.dim = 1;
-		candleOnShaderAttrib.location = glGetAttribLocation(gCandelProgramID, candleOnShaderAttrib.name);
-		candleOnShaderAttrib.instancedDataSize = game->Buffer_candlesStateData.size();
-		candleOnShaderAttrib.instancedData = game->Buffer_candlesStateData.data();
-
-		initInstancedSpriteMeshMaterial_2D(
-			gVertexPos2DLocation,
-			gTextureTranslationLocation,
-			gTextureUVLocation,
-			gVertexTranslationLocation,
-			candelVertexData, 20,
-			game->Buffer_candlesTextureOffsetData.data(), game->Buffer_candlesTextureOffsetData.size(),
-			game->Buffer_candlesVertexOffsetData.data(), game->Buffer_candlesVertexOffsetData.size(),
-			std::vector<InstancedSpriteShaderAttribute_Float> { candleOnShaderAttrib },
-			&candelsMeshMaterial);
 	}
 	return success;
 }
@@ -295,13 +282,8 @@ void render_fun(Game *game) {
 	glBindVertexArray(game->spellPopupSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->spellPopups.size());
 
-	glUseProgram(gCandelProgramID);
-	glUniformMatrix4fv(gModelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(gViewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(gProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
-
-	glBindVertexArray(candelsMeshMaterial.vao);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->Buffer_candlesTextureOffsetData.size() / 2);
+	glBindVertexArray(game->candlesSpriteClass.material.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->candlesSpriteClass.Buffer_textureOffsetData.size() / 2);
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -430,20 +412,9 @@ int main( int argc, char* args[] )
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
 		}
 
-		if (game.BufferRefreshFlag_candlesStateData) {
-			candelsMeshMaterial.shaderAttributes[0].instancedData = game.Buffer_candlesStateData.data();
-			candelsMeshMaterial.shaderAttributes[0].instancedDataSize = game.Buffer_candlesStateData.size();
-			glBindBuffer(GL_ARRAY_BUFFER, candelsMeshMaterial.shaderAttributes[0].bufferHandle);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesStateData.size() * sizeof(GLfloat), game.Buffer_candlesStateData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.BufferRefreshFlag_candlesStateData = false;
-		}
-
-		if (game.BufferRefreshFlag_candlesTextureOffsetData) {
-			glBindBuffer(GL_ARRAY_BUFFER, candelsMeshMaterial.textureOffsetVBO_instanced);
-			glBufferData(GL_ARRAY_BUFFER, game.Buffer_candlesTextureOffsetData.size() * sizeof(GLfloat), game.Buffer_candlesTextureOffsetData.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			game.BufferRefreshFlag_candlesTextureOffsetData = false;
+		if (game.candlesSpriteClass.BufferRefreshFlag_textureOffsetData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.candlesSpriteClass.material.BufferHandle_textureOffsetData, game.candlesSpriteClass.Buffer_textureOffsetData, GL_STATIC_DRAW);
+			game.candlesSpriteClass.BufferRefreshFlag_textureOffsetData = false;
 		}
 
 		if (game.cardSpriteClass.BufferRefreshFlag_vertexOffsetData) {
