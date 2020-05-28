@@ -284,6 +284,9 @@ void render_fun(Game *game) {
 
 	glBindVertexArray(game->candlesSpriteClass.material.BufferHandle_VAO);
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, game->candlesSpriteClass.Buffer_textureOffsetData.size() / 2);
+
+	glBindVertexArray(game->dustBowlSpriteClass.material.BufferHandle_VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL, 1);
 	
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -319,7 +322,7 @@ int main( int argc, char* args[] )
 		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
 		//Create window
-		window = SDL_CreateWindow( "Summoners Tower", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280/2, 960/2/*NULL, NULL*/, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/);
+		window = SDL_CreateWindow( "Summoners Tower", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960/*NULL, NULL*/, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN_DESKTOP*/);
 		SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 		if( window == NULL )
 		{
@@ -410,6 +413,11 @@ int main( int argc, char* args[] )
 			float dt = (float)diff / /*16.0f*/ (1000.0f / 100.0f);
 			ticks = currentTicks;
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
+		}
+
+		if (game.dustBowlSpriteClass.BufferRefreshFlag_scaleValueData) {
+			refreshBuffer<GLfloat>(GL_ARRAY_BUFFER, game.dustBowlSpriteClass.material.BufferHandleInstanced_scaleData, game.dustBowlSpriteClass.Buffer_scaleValueData, GL_STATIC_DRAW);
+			game.dustBowlSpriteClass.BufferRefreshFlag_scaleValueData = false;
 		}
 
 		if (game.candlesSpriteClass.BufferRefreshFlag_textureOffsetData) {

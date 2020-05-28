@@ -7,6 +7,7 @@
 #include "game_structs.h"
 #include "card.h"
 #include "spells.h"
+#include "dust_bowl.h"
 
 void init_game(Game *game);
 void tick(Game *game, float mouseX, float mouseY, float dt);
@@ -379,6 +380,17 @@ void init_game(Game *game) {
 	dustBowlSprite.BufferIndex_tintValueData = 0;
 	dustBowlSprite.BufferIndex_vertexOffsetData = 0;
 
+	game->dustBowlSpriteClass.Buffer_scaleValueData.push_back(1.0f);
+	game->dustBowlSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->dustBowlSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->dustBowlSpriteClass.Buffer_tintValueData.push_back(1.0f);
+	game->dustBowlSpriteClass.Buffer_textureOffsetData.push_back(DUST_BOWL_COLUMN);
+	game->dustBowlSpriteClass.Buffer_textureOffsetData.push_back(DUST_BOWL_SPRITE_ROW);
+	
+	game->dustBowlSpriteClass.Buffer_vertexOffsetData.push_back(1300.0f);
+	game->dustBowlSpriteClass.Buffer_vertexOffsetData.push_back(300.0f);
+	game->dustBowlSpriteClass.Buffer_vertexOffsetData.push_back(0.0f);
+	
 	game->dustBowl.sprite = dustBowlSprite;
 	game->dustBowl.dustRemaining = 100;
 	game->dustBowl.mouseHovering = false;
@@ -397,6 +409,7 @@ void tick(Game *game, float mouseX, float mouseY, float dt) {
 
 	game->gameTime += dt;
 	tickSpells(game);
+	tickDustBowl(game);
 	resolveScaleAnimations<Card>(game->cardSpriteClass, game->cards, game->gameTime);
 	game->lastMouseX = game->mouseX;
 	game->lastMouseY = game->mouseY;
