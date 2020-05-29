@@ -385,7 +385,7 @@ int main( int argc, char* args[] )
 					quit = true;
 				}
 				else if (e.key.keysym.sym == SDLK_SPACE) {
-					game.turnEndedByPlayer = true;
+					//game.turnEndedByPlayer = true;
 				}
 			}
 			else if (e.type == SDL_MOUSEMOTION) {
@@ -403,6 +403,7 @@ int main( int argc, char* args[] )
 			}
 			else if (e.type == SDL_MOUSEBUTTONUP) {
 				game.lmbDown = false;
+				game.lmbLifted = true;
 			}
 
 		}
@@ -413,6 +414,9 @@ int main( int argc, char* args[] )
 			float dt = (float)diff / /*16.0f*/ (1000.0f / 100.0f);
 			ticks = currentTicks;
 			tick(&game, mouseTransformation.x, mouseTransformation.y, dt);
+			//we only ever want these to be true for one game tick
+			game.lmbLifted = false;
+			game.rmbLifted = false;
 		}
 
 		if (game.dustBowlSpriteClass.BufferRefreshFlag_scaleValueData) {

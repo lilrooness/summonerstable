@@ -129,6 +129,7 @@ struct Game {
 	int summonLevel = 0;
 	float gameTime;
 	bool rmbDown{ false }, lmbDown{ false };
+	bool rmbLifted{ false }, lmbLifted{ false };
 	float mouseX{ 0.0f }, mouseY{ 0.0f };
 	float lastMouseX{ 0.0f }, lastMouseY{ 0.0f };
 
